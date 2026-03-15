@@ -3,6 +3,11 @@
 @layer base {
   :root {
     --font-outfit: "Outfit", sans-serif;
+    --ipl-gold: #D4AF37;
+    --ipl-gold-light: #FFD700;
+    --ipl-blue: #003087;
+    --ipl-red: #CC0000;
+    --cricket-green: #1a4a2e;
   }
 }
 
@@ -16,7 +21,7 @@ html {
 
 body {
   font-family: var(--font-outfit, "Outfit", sans-serif);
-  background: #080B14;
+  background: #06080F;
 }
 
 /* Custom scrollbar */
@@ -24,14 +29,14 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f1117;
+  background: #0a0d18;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2f45;
+  background: #D4AF3740;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a4060;
+  background: #D4AF3770;
 }
 
 /* Glassmorphism utility */
@@ -57,19 +62,25 @@ body {
 }
 
 .shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 1.8s infinite;
 }
 
-/* Pulse glow */
+/* IPL Gold pulse glow */
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 10px rgba(251, 146, 60, 0.3); }
-  50% { box-shadow: 0 0 25px rgba(251, 146, 60, 0.6); }
+  0%, 100% { box-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: 0 0 28px rgba(212, 175, 55, 0.65); }
 }
 
 .pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Team logo glow on hover */
+@keyframes logo-glow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
 }
 
 /* Fade-in animation */
@@ -86,4 +97,67 @@ body {
 
 .fade-in-up {
   animation: fadeInUp 0.4s ease forwards;
+}
+
+/* Cricket ball spin */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* Team ticker scroll */
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 30s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* Cricket pitch lines background pattern */
+.cricket-bg {
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 59px,
+      rgba(212, 175, 55, 0.03) 59px,
+      rgba(212, 175, 55, 0.03) 60px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 59px,
+      rgba(212, 175, 55, 0.025) 59px,
+      rgba(212, 175, 55, 0.025) 60px
+    );
+}
+
+/* Gold gradient text */
+.gold-text {
+  background: linear-gradient(135deg, #FFD700 0%, #D4AF37 40%, #FFF0A0 60%, #D4AF37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* IPL card top accent */
+.ipl-card-accent::before {
+  content: '';
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--team-color-1, #D4AF37), var(--team-color-2, #003087));
+  border-radius: 2px 2px 0 0;
 }

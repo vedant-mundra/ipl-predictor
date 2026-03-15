@@ -7,14 +7,17 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import fixtures from "@/data/fixtures.json";
 import simulatedUsers from "@/data/users.json";
 import type { Match, LeaderboardEntry } from "@/lib/types";
-import { TrophyIcon, UserCircleIcon } from "@heroicons/react/24/outline";
-import { TrophyIcon as TrophySolid } from "@heroicons/react/24/solid";
+import { UserCircleIcon } from "@heroicons/react/24/outline";
 
 const matches = fixtures as Match[];
 
-// Medal colors
-const medalColors = ["text-yellow-400", "text-gray-300", "text-amber-600"];
-const medalEmojis = ["🥇", "🥈", "🥉"];
+// Medal colors and styles
+const medalColors = [
+  "from-[#FFD700] to-[#D4AF37]", // Gold
+  "from-[#E0E0E0] to-[#A0A0A0]", // Silver
+  "from-[#CD7F32] to-[#A0522D]"  // Bronze
+];
+const medalText = ["text-[#FFD700]", "text-gray-300", "text-[#CD7F32]"];
 
 export default function LeaderboardPage() {
   const { predictions, isHydrated } = usePredictions();
@@ -78,25 +81,29 @@ export default function LeaderboardPage() {
   const completedMatches = results.length;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
-          <TrophyIcon className="w-5 h-5 text-white" />
+      <div className="flex flex-col items-center text-center mb-10">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FFD700] to-[#B8860B] flex items-center justify-center shadow-[0_0_40px_rgba(212,175,55,0.4)] mb-4 border-2 border-[#FFF0A0]/40 relative overflow-hidden">
+          <div className="absolute inset-0 bg-white/30 w-full h-full skew-x-[-20deg] translate-x-[-150%] animate-[shimmer_3s_infinite]" />
+          <span className="text-3xl filter drop-shadow-md relative z-10">👑</span>
         </div>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white">Leaderboard</h1>
-          <p className="text-sm text-gray-400">
-            Based on {completedMatches} completed match{completedMatches !== 1 ? "es" : ""}
-          </p>
-        </div>
+        <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight uppercase">
+          Global <span className="gold-text">Rankings</span>
+        </h1>
+        <p className="text-sm font-medium text-[#D4AF37] mt-2 tracking-wider uppercase">
+          {completedMatches} / {matches.length} Matches Completed
+        </p>
       </div>
 
       {/* Username input */}
-      <div className="glass rounded-xl p-4 mb-6 flex items-center gap-3">
-        <UserCircleIcon className="w-6 h-6 text-orange-400 shrink-0" />
-        <div className="flex-1">
-          <p className="text-xs text-gray-500 mb-1 font-medium">Your display name</p>
+      <div className="glass rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-center gap-4 border-[#D4AF37]/20 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+          <UserCircleIcon className="w-7 h-7 text-[#D4AF37]" />
+        </div>
+        <div className="flex-1 w-full text-center sm:text-left z-10">
+          <p className="text-[10px] text-white/40 mb-1 font-bold tracking-widest uppercase">Display Name</p>
           <input
             type="text"
             value={userName as string}
@@ -105,104 +112,157 @@ export default function LeaderboardPage() {
               setCurrentUser(e.target.value);
             }}
             placeholder="Enter your name..."
-            className="w-full bg-transparent text-white text-sm font-semibold outline-none placeholder-gray-600"
+            className="w-full bg-transparent text-white text-lg font-black outline-none placeholder-white/20 focus:text-[#FFD700] transition-colors"
             maxLength={20}
           />
+        </div>
+        <div className="hidden sm:block text-[#D4AF37] opacity-30 group-hover:opacity-100 transition-opacity">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
         </div>
       </div>
 
       {/* Top 3 podium (if results available) */}
       {completedMatches > 0 && leaderboard.length >= 3 && (
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {leaderboard.slice(0, 3).map((entry, pos) => (
-            <div
-              key={entry.userId}
-              className={`glass rounded-xl p-4 text-center flex flex-col items-center gap-2 ${
-                entry.isCurrentUser ? "border border-orange-500/30" : ""
-              }`}
-            >
-              <div className="text-2xl">{medalEmojis[pos]}</div>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-xs font-black text-white border border-white/10">
-                {entry.avatar}
+        <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-10 items-end mt-16 px-2 sm:px-10">
+          {[1, 0, 2].map((posIndex) => { // Render order: 2nd, 1st, 3rd to make a visual podium
+            const entry = leaderboard[posIndex];
+            if (!entry) return null;
+            const isFirst = posIndex === 0;
+            const isSecond = posIndex === 1;
+            const isThird = posIndex === 2;
+            
+            return (
+              <div
+                key={entry.userId}
+                className={`flex flex-col items-center relative transition-transform hover:-translate-y-2 duration-300 ${
+                  isFirst ? "z-10" : "z-0"
+                }`}
+              >
+                {/* Crown for 1st */}
+                {isFirst && <div className="absolute -top-8 text-2xl filter drop-shadow-[0_0_10px_rgba(255,215,0,0.8)] animate-bounce">👑</div>}
+                
+                {/* Avatar */}
+                <div className={`rounded-full flex items-center justify-center font-black text-white shadow-xl border-4 ${
+                  isFirst ? "w-20 h-20 text-xl border-[#FFD700] bg-gradient-to-br from-[#FFD700]/20 to-[#B8860B]/40" : 
+                  isSecond ? "w-16 h-16 text-lg border-[#E0E0E0] bg-white/10" : 
+                  "w-16 h-16 text-lg border-[#CD7F32] bg-white/10"
+                } ${entry.isCurrentUser ? "ring-2 ring-white ring-offset-2 ring-offset-[#06080F]" : ""}`}>
+                  {entry.avatar}
+                </div>
+                
+                {/* Player Name */}
+                <p className={`font-bold mt-3 mb-2 truncate w-full text-center ${isFirst ? "text-[#FFD700] text-sm" : "text-white/80 text-xs"}`}>
+                  {entry.name}
+                </p>
+
+                {/* Podium Block */}
+                <div className={`w-full rounded-t-xl bg-gradient-to-b ${medalColors[posIndex]} p-0.5 shadow-lg`}>
+                  <div className={`w-full h-full bg-[#06080F]/90 rounded-t-[10px] flex flex-col items-center justify-start ${
+                    isFirst ? "pt-6 pb-2 min-h-[140px]" : 
+                    isSecond ? "pt-4 pb-2 min-h-[110px]" : 
+                    "pt-4 pb-2 min-h-[90px]"
+                  }`}>
+                    <span className={`text-3xl font-black ${medalText[posIndex]}`}>{entry.correct}</span>
+                    <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold mt-1">PTS</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs font-semibold text-white truncate w-full text-center">{entry.name}</p>
-              <p className={`text-lg font-black ${medalColors[pos]}`}>{entry.correct}</p>
-              <p className="text-[10px] text-gray-600">correct picks</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
       {/* Full table */}
       {!isHydrated ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="glass rounded-xl h-16 shimmer" />
+            <div key={i} className="glass rounded-2xl h-20 shimmer" />
           ))}
         </div>
       ) : completedMatches === 0 ? (
-        <div className="glass rounded-2xl p-10 text-center">
-          <TrophySolid className="w-12 h-12 text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">No results yet</p>
-          <p className="text-gray-600 text-sm mt-1">
-            Add match results in the Results tab to see scores
+        <div className="glass rounded-3xl p-12 text-center border-white/5">
+          <div className="w-16 h-16 rounded-full bg-white/5 mx-auto flex items-center justify-center mb-4">
+            <span className="text-2xl opacity-50">🏆</span>
+          </div>
+          <p className="text-white/80 text-lg font-bold">No results yet</p>
+          <p className="text-white/40 text-sm mt-2">
+            Add match results in the Results tab to view the standings
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {leaderboard.map((entry) => {
-            const accuracy =
-              entry.total > 0 ? Math.round((entry.correct / entry.total) * 100) : 0;
-            return (
-              <div
-                key={entry.userId}
-                className={`glass glass-hover rounded-xl px-4 py-3 flex items-center gap-4 ${
-                  entry.isCurrentUser
-                    ? "border border-orange-500/25 bg-orange-500/5"
-                    : ""
-                }`}
-              >
-                {/* Rank */}
-                <div className="w-8 text-center shrink-0">
-                  {entry.rank <= 3 ? (
-                    <span className="text-lg">{medalEmojis[entry.rank - 1]}</span>
-                  ) : (
-                    <span className="text-sm font-bold text-gray-500">#{entry.rank}</span>
-                  )}
-                </div>
-
-                {/* Avatar */}
+        <div className="bg-[#0A0D18] rounded-3xl border border-white/10 overflow-hidden shadow-xl">
+          <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/10 bg-white/5 text-[10px] font-black tracking-widest uppercase text-white/40">
+            <div className="col-span-2 text-center">Rank</div>
+            <div className="col-span-6">Player</div>
+            <div className="col-span-2 text-center">Acc</div>
+            <div className="col-span-2 text-right">Pts</div>
+          </div>
+          
+          <div className="divide-y divide-white/5">
+            {leaderboard.map((entry) => {
+              const accuracy =
+                entry.total > 0 ? Math.round((entry.correct / entry.total) * 100) : 0;
+              return (
                 <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-black border ${
+                  key={entry.userId}
+                  className={`grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-white/[0.02] ${
                     entry.isCurrentUser
-                      ? "bg-orange-500/20 border-orange-500/40 text-orange-300"
-                      : "bg-white/5 border-white/10 text-white"
+                      ? "bg-[rgba(212,175,55,0.08)] relative"
+                      : ""
                   }`}
                 >
-                  {entry.avatar}
-                </div>
+                  {entry.isCurrentUser && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#D4AF37]" />
+                  )}
+                  
+                  {/* Rank */}
+                  <div className="col-span-2 flex justify-center">
+                    <span className="text-sm font-black text-white/50">
+                      {entry.rank <= 3 ? ["🥇", "🥈", "🥉"][entry.rank - 1] : `#${entry.rank}`}
+                    </span>
+                  </div>
 
-                {/* Name */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">
-                    {entry.name}
-                    {entry.isCurrentUser && (
-                      <span className="ml-2 text-[10px] text-orange-400 font-medium">YOU</span>
-                    )}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {entry.total} prediction{entry.total !== 1 ? "s" : ""} • {accuracy}% accuracy
-                  </p>
-                </div>
+                  {/* Player */}
+                  <div className="col-span-6 flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                        entry.isCurrentUser
+                          ? "bg-[#D4AF37] text-black"
+                          : "bg-white/10 text-white/80"
+                      }`}
+                    >
+                      {entry.avatar}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-bold truncate ${entry.isCurrentUser ? "text-[#D4AF37]" : "text-white/90"}`}>
+                        {entry.name}
+                        {entry.isCurrentUser && (
+                          <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[8px] bg-[#D4AF37] text-black font-black uppercase tracking-widest align-middle">YOU</span>
+                        )}
+                      </p>
+                      <p className="text-[10px] text-white/40 font-medium">
+                        {entry.total} Match{entry.total !== 1 ? "es" : ""}
+                      </p>
+                    </div>
+                  </div>
 
-                {/* Score */}
-                <div className="text-right shrink-0">
-                  <p className="text-lg font-black text-white">{entry.correct}</p>
-                  <p className="text-[10px] text-gray-600">correct</p>
+                  {/* Accuracy */}
+                  <div className="col-span-2 flex justify-center">
+                    <span className="text-xs font-bold text-white/60">{accuracy}%</span>
+                  </div>
+
+                  {/* Points */}
+                  <div className="col-span-2 flex justify-end">
+                    <span className={`text-lg font-black ${entry.isCurrentUser ? "text-[#FFD700]" : "text-white"}`}>
+                      {entry.correct}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

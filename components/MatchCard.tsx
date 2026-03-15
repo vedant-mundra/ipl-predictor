@@ -1,11 +1,11 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { LockClosedIcon, CheckCircleIcon, ClockIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as CheckCircleSolid } from "@heroicons/react/24/solid";
 import type { Match, MatchResult, Prediction } from "@/lib/types";
-import { TEAM_CONFIG } from "@/lib/teams";
+import { TEAM_CONFIG, SHORT_TO_FULL } from "@/lib/teams";
+import Image from "next/image";
 
 interface MatchCardProps {
   match: Match;
@@ -73,7 +73,7 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
 
   const handlePredict = (team: string) => {
     if (prediction?.team === team) {
-      // Toggle off — clicking the selected team deselects it
+      // Toggle off
       onClearPrediction(match.id, match.date, match.time);
     } else {
       const ok = onPredict(match.id, team, match.date, match.time);
@@ -93,108 +93,162 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
 
   return (
     <div
-      className={`glass glass-hover rounded-2xl overflow-hidden transition-all duration-300 fade-in-up ${animatePrediction ? "scale-[1.01]" : ""
+      className={`relative glass glass-hover rounded-2xl overflow-hidden transition-all duration-300 fade-in-up ipl-card-accent ${animatePrediction ? "scale-[1.01]" : ""
         }`}
-      style={{ animationDelay: `${index * 60}ms` }}
+      style={
+        {
+          animationDelay: `${index * 60}ms`,
+          "--team-color-1": team1Config?.primary || "#D4AF37",
+          "--team-color-2": team2Config?.primary || "#003087",
+        } as React.CSSProperties
+      }
     >
       {/* Match number + status bar */}
       <div className="flex items-center justify-between px-5 pt-4 pb-2">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-          Match #{match.id}
+        <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest pl-1">
+          Match {match.id}
         </span>
         <div className="flex items-center gap-2">
           {winner && (
-            <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30">
-              <CheckCircleIcon className="w-3 h-3" /> Result in
+            <span className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <CheckCircleIcon className="w-3.5 h-3.5" /> RESULT IN
             </span>
           )}
           {isLocked && !winner ? (
-            <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30">
-              <LockClosedIcon className="w-3 h-3" /> Locked
+            <span className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/30">
+              <LockClosedIcon className="w-3.5 h-3.5" /> LOCKED
             </span>
           ) : !isLocked ? (
-            <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <ClockIcon className="w-3 h-3" /> {countdown} left
+            <span className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30">
+              <ClockIcon className="w-3.5 h-3.5" /> {countdown}
             </span>
           ) : null}
         </div>
       </div>
 
       {/* Teams section */}
-      <div className="px-5 py-3">
-        <div className="flex items-center justify-between gap-4">
+      <div className="px-5 py-3 mt-1">
+        <div className="flex items-center justify-between relative">
+          {/* Background aura for logos */}
+          <div className="absolute left-[15%] top-1/2 -translate-y-1/2 w-16 h-16 rounded-full blur-xl opacity-20" style={{ backgroundColor: team1Config?.primary }} />
+          <div className="absolute right-[15%] top-1/2 -translate-y-1/2 w-16 h-16 rounded-full blur-xl opacity-20" style={{ backgroundColor: team2Config?.primary }} />
+
           {/* Team 1 */}
-          <div className="flex-1 text-center">
+          <div className="flex flex-col items-center w-[40%] text-center z-10">
             <div
-              className="text-2xl sm:text-3xl font-black tracking-tight"
-              style={{ color: team1Config?.primary || "#fff" }}
+              className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: "#fff", border: `3px solid ${team1Config?.primary}`, boxShadow: `0 0 15px ${team1Config?.primary}30` }}
             >
+              <div className="relative w-full h-full">
+                <Image src={team1Config?.logo} alt={match.team1Short} fill className="object-contain p-2 drop-shadow-sm" sizes="(max-width: 768px) 72px, 84px" />
+              </div>
+            </div>
+            <div className="text-sm sm:text-base font-black tracking-tight text-white/90">
               {match.team1Short}
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-400 mt-0.5 leading-tight">{match.team1}</div>
           </div>
 
-          {/* VS divider */}
-          <div className="flex flex-col items-center gap-1 shrink-0">
-            <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-400">
-              VS
+          {/* VS divider (Cricket ball style) */}
+          <div className="flex flex-col items-center justify-center z-10 mx-2">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/10 shadow-lg flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#CC2200] to-[#7A0000]">
+              <span className="text-[10px] sm:text-xs font-black text-white italic drop-shadow-md z-10">VS</span>
+              {/* Seam line svg overlay */}
+              <svg className="absolute inset-0 w-full h-full opacity-60" viewBox="0 0 24 24">
+                <path d="M6 0 Q12 12 6 24 M18 0 Q12 12 18 24" stroke="#FFF" strokeWidth="0.5" fill="none" />
+                <path d="M4 4 Q8 8 4 12 M20 4 Q16 8 20 12 M4 12 Q8 16 4 20 M20 12 Q16 16 20 20" stroke="#FFF" strokeWidth="0.5" fill="none" />
+              </svg>
             </div>
           </div>
 
           {/* Team 2 */}
-          <div className="flex-1 text-center">
+          <div className="flex flex-col items-center w-[40%] text-center z-10">
             <div
-              className="text-2xl sm:text-3xl font-black tracking-tight"
-              style={{ color: team2Config?.primary || "#fff" }}
+              className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: "#fff", border: `3px solid ${team2Config?.primary}`, boxShadow: `0 0 15px ${team2Config?.primary}30` }}
             >
+              <div className="relative w-full h-full">
+                <Image src={team2Config?.logo} alt={match.team2Short} fill className="object-contain p-2 drop-shadow-sm" sizes="(max-width: 768px) 72px, 84px" />
+              </div>
+            </div>
+            <div className="text-sm sm:text-base font-black tracking-tight text-white/90">
               {match.team2Short}
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-400 mt-0.5 leading-tight">{match.team2}</div>
           </div>
         </div>
       </div>
 
       {/* Date + Venue */}
-      <div className="flex items-center gap-4 px-5 pb-3 text-xs text-gray-500">
-        <span className="flex items-center gap-1">
-          <ClockIcon className="w-3.5 h-3.5" />
+      <div className="flex items-center justify-center gap-4 px-5 pb-4 mt-2 text-[11px] text-white/50 font-medium tracking-wide">
+        <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
+          <ClockIcon className="w-3.5 h-3.5 text-[#D4AF37]" />
           {dateFormatted} • {timeFormatted}
         </span>
+      </div>
+      <div className="flex items-center justify-center pb-4 text-[11px] text-white/40">
         <span className="flex items-center gap-1">
-          <MapPinIcon className="w-3.5 h-3.5" />
+          <MapPinIcon className="w-3 h-3" />
           {match.venue}
         </span>
       </div>
 
       {/* Divider */}
-      <div className="h-px bg-white/5 mx-5" />
+      <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent w-full" />
 
       {/* Prediction area */}
-      <div className="px-5 py-4">
+      <div className="px-5 py-4 bg-white/[0.02]">
         {/* Result outcome banner */}
         {winner && (
           <div
-            className={`mb-3 flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold ${isCorrect
-                ? "bg-green-500/15 text-green-400 border border-green-500/25"
-                : isWrong
-                  ? "bg-red-500/15 text-red-400 border border-red-500/25"
-                  : "bg-gray-700/30 text-gray-400 border border-gray-700/30"
+            className={`mb-4 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold border ${isCorrect
+              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+              : isWrong
+                ? "bg-red-500/10 text-red-400 border-red-500/20"
+                : "bg-white/5 text-gray-400 border-white/5"
               }`}
           >
             {isCorrect ? (
               <>
-                <CheckCircleSolid className="w-4 h-4" />
-                🎉 Correct! {winner} won.
+                <div className="w-8 h-8 rounded-full bg-white p-1 shrink-0">
+                  <div className="relative w-full h-full">
+                    <Image src={TEAM_CONFIG[winner]?.logo || ""} alt="Winner" fill className="object-contain p-[2px]" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-0.5">Correct Prediction</div>
+                  <div className="text-white/90 text-sm">{winner} won</div>
+                </div>
               </>
             ) : isWrong ? (
               <>
-                <span>❌</span>
-                {winner} won. You picked {predictedTeam?.split(" ").pop()}.
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-white p-1 shrink-0 grayscale opacity-70">
+                    <div className="relative w-full h-full">
+                      <Image src={TEAM_CONFIG[predictedTeam as string]?.logo || ""} alt="Picked" fill className="object-contain p-[2px]" />
+                    </div>
+                  </div>
+                  <span className="text-white/40 text-xs px-1">vs</span>
+                  <div className="w-8 h-8 rounded-full bg-white p-1 shrink-0">
+                    <div className="relative w-full h-full">
+                      <Image src={TEAM_CONFIG[winner]?.logo || ""} alt="Winner" fill className="object-contain p-[2px]" />
+                    </div>
+                  </div>
+                </div>
+                <div className="ml-1">
+                  <div className="text-red-400 text-xs font-bold uppercase tracking-wider mb-0.5">Incorrect Pick</div>
+                  <div className="text-white/70 text-xs">Winner: <span className="text-white font-medium">{TEAM_CONFIG[winner]?.shortCode}</span></div>
+                </div>
               </>
             ) : (
               <>
-                <span>🏆</span>
-                Winner: {winner}. (No prediction)
+                <div className="w-8 h-8 rounded-full bg-white p-1 shrink-0">
+                  <div className="relative w-full h-full">
+                    <Image src={TEAM_CONFIG[winner]?.logo || ""} alt="Winner" fill className="object-contain p-[2px]" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mb-0.5">Match Result</div>
+                  <div className="text-white/90 text-sm">{winner} won</div>
+                </div>
               </>
             )}
           </div>
@@ -202,25 +256,31 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
 
         {/* Predict / Locked */}
         {isLocked ? (
-          <div className="text-center text-sm text-gray-500 flex items-center justify-center gap-2 py-2">
-            <LockClosedIcon className="w-4 h-4" />
-            {predictedTeam ? (
-              <span>
-                Prediction Locked 🔒 —{" "}
-                <span className="font-semibold text-gray-300">
-                  {match[predictedTeam === match.team1 ? "team1Short" : "team2Short"]}
+          <div className="text-center py-2 flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2 text-[11px] font-bold text-white/40 uppercase tracking-widest">
+              <LockClosedIcon className="w-3.5 h-3.5" />
+              Prediction Locked
+            </div>
+            {predictedTeam && (
+              <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg mt-1">
+                <span className="text-xs text-white/60">Your Pick:</span>
+                <div className="w-4 h-4 rounded-full bg-white p-0.5 shrink-0">
+                  <div className="relative w-full h-full">
+                    <Image src={TEAM_CONFIG[predictedTeam]?.logo || ""} alt="Pick" fill className="object-contain p-[2px]" />
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-white" style={{ color: TEAM_CONFIG[predictedTeam]?.primary }}>
+                  {TEAM_CONFIG[predictedTeam]?.shortCode}
                 </span>
-              </span>
-            ) : (
-              "Prediction Locked 🔒"
+              </div>
             )}
           </div>
         ) : (
           <div>
-            <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">
-              Predict Winner:
+            <p className="text-[10px] text-center text-[#D4AF37] mb-3 font-bold uppercase tracking-[0.2em]">
+              Predict Match Winner
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {[
                 { team: match.team1, short: match.team1Short, config: team1Config },
                 { team: match.team2, short: match.team2Short, config: team2Config },
@@ -230,34 +290,44 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
                   <button
                     key={team}
                     onClick={() => handlePredict(team)}
-                    className={`relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-bold transition-all duration-200 border ${isPicked
-                        ? "border-white/30 text-white scale-[1.02] shadow-lg"
-                        : "border-white/8 text-gray-400 hover:text-white hover:border-white/20 hover:scale-[1.01]"
+                    className={`relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl transition-all duration-300 border overflow-hidden group ${isPicked
+                      ? "border-[#D4AF37]/50 text-white scale-[1.03] shadow-lg"
+                      : "border-white/10 text-white/70 hover:text-white hover:border-[#D4AF37]/30 hover:scale-[1.02]"
                       }`}
                     style={
                       isPicked
                         ? {
-                          backgroundColor: `${config?.primary}25`,
-                          borderColor: `${config?.primary}60`,
-                          boxShadow: `0 4px 20px ${config?.primary}30`,
+                          background: `linear-gradient(135deg, ${config?.primary}25 0%, rgba(212,175,55,0.1) 100%)`,
+                          boxShadow: `0 4px 20px ${config?.primary}30, inset 0 0 10px ${config?.primary}20`,
                         }
-                        : {}
+                        : {
+                          background: "rgba(255,255,255,0.03)"
+                        }
                     }
                   >
+                    {/* Tiny team logo */}
+                    <div className={`w-5 h-5 rounded-full bg-white p-[2px] shrink-0 transition-transform ${isPicked ? "scale-110" : "group-hover:scale-110"}`}>
+                      <div className="relative w-full h-full">
+                        <Image src={config?.logo || ""} alt={short} fill className="object-contain p-[2px]" />
+                      </div>
+                    </div>
+
+                    <span className={`text-sm font-black tracking-tight ${isPicked ? "text-white" : ""}`}>
+                      {short}
+                    </span>
+
                     {isPicked && (
                       <CheckCircleSolid
-                        className="w-4 h-4 shrink-0"
-                        style={{ color: config?.primary }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 shrink-0 text-[#D4AF37] drop-shadow-sm"
                       />
                     )}
-                    <span>{short}</span>
                   </button>
                 );
               })}
             </div>
             {predictedTeam && (
-              <p className="text-xs text-center mt-2 text-gray-600">
-                Click again to deselect
+              <p className="text-[10px] text-center mt-3 text-white/30 font-medium">
+                Click again to change prediction
               </p>
             )}
           </div>
