@@ -6,6 +6,8 @@ import { CheckCircleIcon as CheckCircleSolid } from "@heroicons/react/24/solid";
 import type { Match, MatchResult, Prediction } from "@/lib/types";
 import { TEAM_CONFIG, SHORT_TO_FULL } from "@/lib/teams";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface MatchCardProps {
   match: Match;
@@ -14,6 +16,9 @@ interface MatchCardProps {
   onPredict: (matchId: number, team: string, matchDate: string, matchTime: string) => boolean;
   onClearPrediction: (matchId: number, matchDate: string, matchTime: string) => boolean;
   index: number;
+  predictionCount: number;
+  totalUsers: number;
+  isLoggedIn: boolean;
 }
 
 function formatDate(dateStr: string, timeStr: string) {
@@ -50,10 +55,11 @@ function getMatchStatus(dateStr: string, timeStr: string) {
   return `${diffMins}m`;
 }
 
-export function MatchCard({ match, prediction, result, onPredict, onClearPrediction, index }: MatchCardProps) {
+export function MatchCard({ match, prediction, result, onPredict, onClearPrediction, index, predictionCount, totalUsers, isLoggedIn }: MatchCardProps) {
   const [isLocked, setIsLocked] = useState(false);
   const [countdown, setCountdown] = useState<string>("");
   const [animatePrediction, setAnimatePrediction] = useState(false);
+  const router = useRouter();
 
   const team1Config = TEAM_CONFIG[match.team1];
   const team2Config = TEAM_CONFIG[match.team2];
@@ -72,7 +78,7 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
   }, [updateStatus]);
 
   const handlePredict = (team: string) => {
-    if (prediction?.team === team) {
+    if (prediction?.predictedTeam === team) {
       // Toggle off
       onClearPrediction(match.id, match.date, match.time);
     } else {
@@ -85,7 +91,7 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
   };
 
   const { dateFormatted, timeFormatted } = formatDate(match.date, match.time);
-  const predictedTeam = prediction?.team;
+  const predictedTeam = prediction?.predictedTeam;
   const winner = result?.winner;
 
   const isCorrect = winner && predictedTeam === winner;
@@ -134,19 +140,19 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
           <div className="absolute right-[15%] top-1/2 -translate-y-1/2 w-16 h-16 rounded-full blur-xl opacity-20" style={{ backgroundColor: team2Config?.primary }} />
 
           {/* Team 1 */}
-          <div className="flex flex-col items-center w-[40%] text-center z-10">
+          <Link href={`/team/${match.team1Short.toLowerCase()}`} className="flex flex-col items-center w-[40%] text-center z-10 group cursor-pointer">
             <div
-              className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 hover:opacity-90 transition-opacity"
+              className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 group-hover:scale-105 transition-all duration-300"
               style={{ backgroundColor: "#fff", border: `3px solid ${team1Config?.primary}`, boxShadow: `0 0 15px ${team1Config?.primary}30` }}
             >
               <div className="relative w-full h-full">
-                <Image src={team1Config?.logo} alt={match.team1Short} fill className="object-contain p-2 drop-shadow-sm" sizes="(max-width: 768px) 72px, 84px" />
+                <Image src={team1Config?.logo} alt={match.team1Short} fill className="object-contain p-2 drop-shadow-sm transition-transform group-hover:scale-110" sizes="(max-width: 768px) 72px, 84px" />
               </div>
             </div>
-            <div className="text-sm sm:text-base font-black tracking-tight text-white/90">
+            <div className="text-sm sm:text-base font-black tracking-tight text-white/90 group-hover:text-[#D4AF37] transition-colors">
               {match.team1Short}
             </div>
-          </div>
+          </Link>
 
           {/* VS divider (Cricket ball style) */}
           <div className="flex flex-col items-center justify-center z-10 mx-2">
@@ -161,33 +167,36 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
           </div>
 
           {/* Team 2 */}
-          <div className="flex flex-col items-center w-[40%] text-center z-10">
+          <Link href={`/team/${match.team2Short.toLowerCase()}`} className="flex flex-col items-center w-[40%] text-center z-10 group cursor-pointer">
             <div
-              className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 hover:opacity-90 transition-opacity"
+              className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 group-hover:scale-105 transition-all duration-300"
               style={{ backgroundColor: "#fff", border: `3px solid ${team2Config?.primary}`, boxShadow: `0 0 15px ${team2Config?.primary}30` }}
             >
               <div className="relative w-full h-full">
-                <Image src={team2Config?.logo} alt={match.team2Short} fill className="object-contain p-2 drop-shadow-sm" sizes="(max-width: 768px) 72px, 84px" />
+                <Image src={team2Config?.logo} alt={match.team2Short} fill className="object-contain p-2 drop-shadow-sm transition-transform group-hover:scale-110" sizes="(max-width: 768px) 72px, 84px" />
               </div>
             </div>
-            <div className="text-sm sm:text-base font-black tracking-tight text-white/90">
+            <div className="text-sm sm:text-base font-black tracking-tight text-white/90 group-hover:text-[#D4AF37] transition-colors">
               {match.team2Short}
             </div>
-          </div>
+          </Link>
         </div>
       </div>
 
       {/* Date + Venue */}
-      <div className="flex items-center justify-center gap-4 px-5 pb-4 mt-2 text-[11px] text-white/50 font-medium tracking-wide">
+      <div className="flex items-center justify-center gap-4 px-5 pb-3 mt-2 text-[11px] text-white/50 font-medium tracking-wide">
         <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
           <ClockIcon className="w-3.5 h-3.5 text-[#D4AF37]" />
           {dateFormatted} • {timeFormatted}
         </span>
       </div>
-      <div className="flex items-center justify-center pb-4 text-[11px] text-white/40">
-        <span className="flex items-center gap-1">
+      <div className="flex flex-col items-center justify-center pb-4 gap-2">
+        <span className="flex items-center gap-1 text-[11px] text-white/40">
           <MapPinIcon className="w-3 h-3" />
           {match.venue}
+        </span>
+        <span className="text-[10px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 px-2.5 py-1 rounded-md border border-[#D4AF37]/20">
+          {predictionCount} / {totalUsers} users predicted
         </span>
       </div>
 
@@ -274,6 +283,12 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
                 </span>
               </div>
             )}
+          </div>
+        ) : !isLoggedIn ? (
+          <div className="text-center py-3">
+             <button onClick={() => router.push('/login')} className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold py-2 px-6 rounded-xl transition-colors border border-white/10">
+               Log in to Predict
+             </button>
           </div>
         ) : (
           <div>

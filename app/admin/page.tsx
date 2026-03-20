@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useResults } from "@/hooks/useResults";
+import { useAuth } from "@/hooks/useAuth";
 import fixtures from "@/data/fixtures.json";
 import type { Match } from "@/lib/types";
 import { TEAM_CONFIG } from "@/lib/teams";
@@ -10,14 +11,32 @@ import { ShieldCheckIcon, TrashIcon, CheckCircleIcon } from "@heroicons/react/24
 const matches = fixtures as Match[];
 
 export default function AdminPage() {
-  const { results, setResult, removeResult } = useResults();
+  const { results, setResult, removeResult, isHydrated: isResultsHydrated } = useResults();
+  const { currentUser, isHydrated: isAuthHydrated } = useAuth();
   const [saved, setSaved] = useState<number | null>(null);
+
+  const isHydrated = isResultsHydrated && isAuthHydrated;
 
   const handleSet = (matchId: number, winner: string) => {
     setResult(matchId, winner);
     setSaved(matchId);
     setTimeout(() => setSaved(null), 2000);
   };
+
+  if (!isHydrated) return null;
+
+  if (!currentUser?.isAdmin) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-red-500/10 mx-auto flex items-center justify-center mb-4 border border-red-500/20">
+          <ShieldCheckIcon className="w-8 h-8 text-red-500" />
+        </div>
+        <h1 className="text-3xl font-black text-white mb-2 tracking-tight">Access Denied</h1>
+        <p className="text-gray-400">You do not have permission to view or edit match results.</p>
+        <p className="text-gray-500 text-sm mt-2">Only administrators can access this control panel.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

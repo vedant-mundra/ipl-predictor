@@ -15,13 +15,27 @@ export interface MatchResult {
 }
 
 export interface Prediction {
+  userId: string;
   matchId: number;
-  team: string; // Full team name
+  predictedTeam: string; // Full team name
   lockedAt?: string; // ISO timestamp
 }
 
-export interface Predictions {
-  [matchId: string]: Prediction;
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  password?: string;
+  score?: number;
+  isAdmin?: boolean;
+  groupIds: string[];
+}
+
+export interface CurrentUser {
+  id: string;
+  username: string;
+  isAdmin?: boolean;
+  groupIds: string[];
 }
 
 export interface SimulatedUser {

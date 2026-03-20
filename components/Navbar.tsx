@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TrophyIcon, CalendarIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
+import { TrophyIcon, CalendarIcon, ShieldCheckIcon, UserCircleIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "@/hooks/useAuth";
 
 const navLinks = [
   { href: "/", label: "Matches", icon: CalendarIcon },
@@ -12,6 +13,7 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const { currentUser, currentGroup, logout, users } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#D4AF37]/15"
@@ -46,26 +48,79 @@ export function Navbar() {
             </div>
           </Link>
 
-          {/* Nav links */}
-          <div className="flex items-center gap-1">
-            {navLinks.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border ${
-                    isActive
-                      ? "border-[#D4AF37]/40 text-[#D4AF37]"
-                      : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-white/10"
-                  }`}
-                  style={isActive ? { background: "rgba(212,175,55,0.12)" } : {}}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{label}</span>
+          {/* Nav links & Auth */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="hidden md:flex flex-col items-end mr-2">
+              {currentGroup && (
+                <div className="flex items-center gap-1.5 text-[#D4AF37] bg-[#D4AF37]/10 px-3 py-1 rounded-full border border-[#D4AF37]/20">
+                  <span className="text-[10px] font-bold uppercase tracking-wider">
+                    🔥 {users.filter(u => u.groupIds?.includes(currentGroup)).length} Playing
+                  </span>
+                </div>
+              )}
+              {currentUser?.groupIds && currentUser.groupIds.length > 1 && (
+                <Link href="/groups" className="text-[9px] text-gray-400 hover:text-white uppercase font-bold tracking-widest mt-1 mr-1">
+                  Switch League &rarr;
                 </Link>
-              );
-            })}
+              )}
+            </div>
+
+            <div className="flex items-center gap-1 mr-2 sm:mr-4">
+              {navLinks.map(({ href, label, icon: Icon }) => {
+                if (href === "/admin" && !currentUser?.isAdmin) return null;
+                const isActive = pathname === href;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border ${
+                      isActive
+                        ? "border-[#D4AF37]/40 text-[#D4AF37]"
+                        : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-white/10"
+                    }`}
+                    style={isActive ? { background: "rgba(212,175,55,0.12)" } : {}}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Auth section */}
+            <div className="flex items-center gap-2 border-l border-white/10 pl-2 sm:pl-4">
+              {currentUser ? (
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:flex items-center gap-2 text-sm text-white/90 font-medium">
+                    <UserCircleIcon className="w-5 h-5 text-[#D4AF37]" />
+                    {currentUser.username}
+                  </div>
+                  <button
+                    onClick={logout}
+                    className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10 transition-all"
+                    title="Log Out"
+                  >
+                    <ArrowRightOnRectangleIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/login"
+                    className="px-3 py-1.5 text-sm font-medium text-white/80 hover:text-white transition-colors"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="px-3 py-1.5 text-sm font-bold bg-[#D4AF37] hover:bg-[#B38F22] text-black rounded-lg transition-colors"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       </div>

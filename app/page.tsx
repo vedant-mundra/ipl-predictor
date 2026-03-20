@@ -3,23 +3,35 @@
 import { useState } from "react";
 import { usePredictions } from "@/hooks/usePredictions";
 import { useResults } from "@/hooks/useResults";
+import { useAuth } from "@/hooks/useAuth";
 import { MatchCard } from "@/components/MatchCard";
 import fixtures from "@/data/fixtures.json";
 import type { Match } from "@/lib/types";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import { TEAM_CONFIG } from "@/lib/teams";
 import Image from "next/image";
+import Link from "next/link";
 
 const matches = fixtures as Match[];
 
 type FilterType = "all" | "upcoming" | "live-locked" | "predicted";
 
 export default function MatchesPage() {
-  const { predict, getPrediction, clearPrediction, isHydrated } = usePredictions();
+  const { predict, getPrediction, clearPrediction, getPredictionCount, isHydrated: isPredsHydrated } = usePredictions();
   const { getResult } = useResults();
+  const { users, currentUser, currentGroup, isHydrated: isAuthHydrated } = useAuth();
+  
+  const groupUsers = currentGroup ? users.filter(u => u.groupIds?.includes(currentGroup)) : [];
   const [filter, setFilter] = useState<FilterType>("all");
+  const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [venueFilter, setVenueFilter] = useState<string>("all");
+
+  const isHydrated = isPredsHydrated && isAuthHydrated;
 
   const now = new Date();
+
+  const uniqueTeams = Array.from(new Set(matches.flatMap(m => [m.team1, m.team2]))).sort();
+  const uniqueVenues = Array.from(new Set(matches.map(m => m.venue))).sort();
 
   const withStatus = matches.map((m) => {
     const [h, min] = m.time.split(":").map(Number);
@@ -31,9 +43,13 @@ export default function MatchesPage() {
   });
 
   const filtered = withStatus.filter((m) => {
-    if (filter === "upcoming") return !m.locked;
-    if (filter === "live-locked") return m.locked;
-    if (filter === "predicted") return !!m.prediction;
+    if (filter === "upcoming" && m.locked) return false;
+    if (filter === "live-locked" && !m.locked) return false;
+    if (filter === "predicted" && !m.prediction) return false;
+    
+    if (teamFilter !== "all" && m.team1 !== teamFilter && m.team2 !== teamFilter) return false;
+    if (venueFilter !== "all" && m.venue !== venueFilter) return false;
+    
     return true;
   });
 
@@ -53,14 +69,14 @@ export default function MatchesPage() {
           <div className="ticker-track items-center gap-8 px-6">
             {/* Double array for seamless loop */}
             {[...Object.values(TEAM_CONFIG), ...Object.values(TEAM_CONFIG)].map((team, i) => (
-              <div key={i} className="flex items-center gap-2 group cursor-pointer transition-transform hover:scale-110">
+              <Link href={`/team/${team.shortCode.toLowerCase()}`} key={i} className="flex items-center gap-2 group cursor-pointer transition-transform hover:scale-110">
                 <div className="w-7 h-7 bg-white rounded-full p-[2px]">
                   <div className="relative w-full h-full">
                     <Image src={team.logo} alt={team.shortCode} fill className="object-contain p-[2px]" />
                   </div>
                 </div>
                 <span className="text-xs font-bold text-white/50 group-hover:text-white transition-colors">{team.shortCode}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -101,27 +117,60 @@ export default function MatchesPage() {
           </div>
         </div>
 
-        {/* Filter tabs */}
-        <div className="flex bg-white/5 p-1 rounded-xl backdrop-blur-md border border-white/10 w-full md:w-auto overflow-x-auto scx">
-          {(
-            [
-              { key: "all", label: `All (${matches.length})` },
-              { key: "upcoming", label: `Open` },
-              { key: "live-locked", label: `Locked` },
-              { key: "predicted", label: `Done` },
-            ] as { key: FilterType; label: string }[]
-          ).map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key)}
-              className={`px-4 sm:px-5 py-2 rounded-lg text-xs font-bold transition-all duration-300 whitespace-nowrap ${filter === key
-                  ? "bg-gradient-to-r from-[#D4AF37]/20 to-[#FFD700]/10 text-[#FFD700] shadow-inner shadow-[#D4AF37]/20 border border-[#D4AF37]/30"
-                  : "text-white/50 hover:text-white/90 hover:bg-white/5 border border-transparent"
-                }`}
+        {/* Controls Column */}
+        <div className="flex flex-col gap-3 w-full md:w-auto items-end">
+          {/* Filter tabs */}
+          <div className="flex bg-white/5 p-1 rounded-xl backdrop-blur-md border border-white/10 w-full md:w-auto overflow-x-auto scx">
+            {(
+              [
+                { key: "all", label: `All (${matches.length})` },
+                { key: "upcoming", label: `Open` },
+                { key: "live-locked", label: `Locked` },
+                { key: "predicted", label: `Done` },
+              ] as { key: FilterType; label: string }[]
+            ).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                className={`px-4 sm:px-5 py-2 rounded-lg text-xs font-bold transition-all duration-300 whitespace-nowrap ${filter === key
+                    ? "bg-gradient-to-r from-[#D4AF37]/20 to-[#FFD700]/10 text-[#FFD700] shadow-inner shadow-[#D4AF37]/20 border border-[#D4AF37]/30"
+                    : "text-white/50 hover:text-white/90 hover:bg-white/5 border border-transparent"
+                  }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* New Match Filters */}
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full">
+             <select
+              value={teamFilter}
+              onChange={(e) => setTeamFilter(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-lg text-white/80 text-xs px-3 py-2 outline-none focus:border-[#D4AF37]/50 flex-1 min-w-[120px] transition-colors hover:bg-white/10"
             >
-              {label}
-            </button>
-          ))}
+              <option value="all" className="bg-[#06080F]">All Teams</option>
+              {uniqueTeams.map(t => <option key={t} value={t} className="bg-[#06080F]">{TEAM_CONFIG[t]?.shortCode || t}</option>)}
+            </select>
+            
+            <select
+              value={venueFilter}
+              onChange={(e) => setVenueFilter(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-lg text-white/80 text-xs px-3 py-2 outline-none focus:border-[#D4AF37]/50 flex-1 min-w-[120px] transition-colors hover:bg-white/10"
+            >
+              <option value="all" className="bg-[#06080F]">All Venues</option>
+              {uniqueVenues.map(v => <option key={v} value={v} className="bg-[#06080F]">{v}</option>)}
+            </select>
+            
+            {(teamFilter !== "all" || venueFilter !== "all") && (
+              <button
+                onClick={() => { setTeamFilter("all"); setVenueFilter("all"); }}
+                className="text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-3 py-2 rounded-lg transition-colors border border-red-500/20"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -149,6 +198,9 @@ export default function MatchesPage() {
               onPredict={predict}
               onClearPrediction={clearPrediction}
               index={i}
+              predictionCount={getPredictionCount(match.id)}
+              totalUsers={currentGroup ? groupUsers.length : 0}
+              isLoggedIn={!!currentUser}
             />
           ))}
         </div>
