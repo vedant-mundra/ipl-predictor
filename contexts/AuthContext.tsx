@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!initialGroup) {
         if (savedGroup && groupIds.includes(savedGroup)) {
           initialGroup = savedGroup;
-        } else if (groupIds.length === 1) {
+        } else if (groupIds.length >= 1) {
           initialGroup = groupIds[0];
         }
       }

@@ -67,23 +67,23 @@ export function Navbar() {
           </Link>
 
           {/* Nav links & Auth */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="hidden md:flex flex-col items-end mr-2">
+          <div className="flex items-center gap-1 sm:gap-4">
+            <div className="flex flex-col items-end mr-0.5 sm:mr-2 scale-[0.85] sm:scale-100 origin-right min-w-[fit-content]">
               {currentGroup && userCount !== null && (
-                <div className="flex items-center gap-1.5 text-[#D4AF37] bg-[#D4AF37]/10 px-3 py-1 rounded-full border border-[#D4AF37]/20">
-                  <span className="text-[10px] font-bold uppercase tracking-wider">
-                    🔥 {userCount} Playing
+                <div className="flex items-center gap-1 sm:gap-1.5 text-[#D4AF37] bg-[#D4AF37]/10 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-[#D4AF37]/20">
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
+                    🔥 {userCount} <span className="hidden sm:inline">Playing</span>
                   </span>
                 </div>
               )}
               {currentUser && (
-                <Link href="/groups" className="text-[9px] text-gray-400 hover:text-white uppercase font-bold tracking-widest mt-1 mr-1 transition-colors">
-                  Switch / Join League &rarr;
+                <Link href="/groups" className="text-[8px] sm:text-[9px] text-gray-400 hover:text-white uppercase font-bold tracking-[0.1em] sm:tracking-widest mt-1 mr-0.5 sm:mr-1 transition-colors whitespace-nowrap">
+                  <span className="hidden sm:inline">Switch / Join </span>League &rarr;
                 </Link>
               )}
             </div>
 
-            <div className="flex items-center gap-1 mr-2 sm:mr-4">
+            <div className="flex items-center gap-0.5 sm:gap-1 mr-1 sm:mr-4">
               {navLinks.map(({ href, label, icon: Icon }) => {
                 if (href === "/admin" && !currentUser?.isAdmin) return null;
                 const isActive = pathname === href;
@@ -91,14 +91,14 @@ export function Navbar() {
                   <Link
                     key={href}
                     href={href}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border ${
+                    className={`flex items-center gap-2 px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-sm font-medium transition-all duration-200 border ${
                       isActive
                         ? "border-[#D4AF37]/40 text-[#D4AF37]"
                         : "border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-white/10"
                     }`}
                     style={isActive ? { background: "rgba(212,175,55,0.12)" } : {}}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-4 h-4 sm:w-4 sm:h-4" />
                     <span className="hidden sm:inline">{label}</span>
                   </Link>
                 );
@@ -106,7 +106,7 @@ export function Navbar() {
             </div>
 
             {/* Auth section */}
-            <div className="flex items-center gap-2 border-l border-white/10 pl-2 sm:pl-4">
+            <div className="flex items-center gap-1.5 sm:gap-2 border-l border-white/10 pl-1.5 sm:pl-4">
               {currentUser ? (
                 <div className="flex items-center gap-3">
                   <div className="hidden sm:flex items-center gap-2 text-sm text-white/90 font-medium">
@@ -115,23 +115,23 @@ export function Navbar() {
                   </div>
                   <button
                     onClick={logout}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10 transition-all"
+                    className="p-1.5 sm:p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10 transition-all"
                     title="Log Out"
                   >
-                    <ArrowRightOnRectangleIcon className="w-5 h-5" />
+                    <ArrowRightOnRectangleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Link
                     href="/login"
-                    className="px-3 py-1.5 text-sm font-medium text-white/80 hover:text-white transition-colors whitespace-nowrap"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-white/80 hover:text-white transition-colors whitespace-nowrap"
                   >
                     Log In
                   </Link>
                   <Link
                     href="/signup"
-                    className="px-3 py-1.5 text-sm font-bold bg-[#D4AF37] hover:bg-[#B38F22] text-black rounded-lg transition-colors whitespace-nowrap"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-bold bg-[#D4AF37] hover:bg-[#B38F22] text-black rounded-lg transition-colors whitespace-nowrap"
                   >
                     Sign Up
                   </Link>
