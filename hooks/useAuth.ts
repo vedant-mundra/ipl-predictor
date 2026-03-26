@@ -1,110 +1,141 @@
-import { useCallback } from "react";
-import { useLocalStorage } from "./useLocalStorage";
-import type { User, CurrentUser } from "@/lib/types";
-import { VALID_GROUPS } from "@/lib/groups";
-
-const USERS_KEY = "ipl_users_2026";
-const CURRENT_USER_KEY = "ipl_current_user_2026";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 export function useAuth() {
-  const [users, setUsers, isUsersHydrated] = useLocalStorage<User[]>(USERS_KEY, []);
-  const [currentUser, setCurrentUser, isCurrentUserHydrated] = useLocalStorage<CurrentUser | null>(
-    CURRENT_USER_KEY,
-    null
-  );
-  const [currentGroup, setCurrentGroup, isCurrentGroupHydrated] = useLocalStorage<string | null>(
-    "ipl_current_group_2026",
-    null
-  );
+  const { session, user, currentUser, currentGroup, setCurrentGroup, isHydrated, refreshUserGroups } = useAuthContext();
 
-  const isHydrated = isUsersHydrated && isCurrentUserHydrated && isCurrentGroupHydrated;
-
-  const signup = useCallback((email: string, username: string, password: string, inviteCode: string): { success: boolean, message: string } => {
-    const isAdmin = email.toLowerCase() === "admin@ipl.com";
-    if (isAdmin) {
-      setCurrentUser({ id: "admin", username: "Admin", isAdmin: true, groupIds: [] });
-      setCurrentGroup(null);
-      return { success: true, message: "Logged in as Admin. (Admins are omitted from player rankings)" };
-    }
-
-    if (!VALID_GROUPS[inviteCode]) {
-      return { success: false, message: "Invalid invite code" };
-    }
-
-    const existingUser = users.find(u => u.email === email);
-    if (existingUser) {
-      if (existingUser.password !== password) {
-        return { success: false, message: "Email already registered with a different password." };
-      }
-      if (existingUser.groupIds.includes(inviteCode)) {
-        return { success: false, message: "You are already a member of this league." };
+  const signup = async (email: string, username: string, password: string, inviteCode: string): Promise<{ success: boolean, message: string }> => {
+    try {
+      if (email.toLowerCase() === "admin@ipl.com") {
+        return { success: false, message: "Use login for admin" };
       }
 
-      const updatedUser = { ...existingUser, groupIds: [...existingUser.groupIds, inviteCode] };
-      setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-      setCurrentUser({ id: updatedUser.id, username: updatedUser.username, isAdmin: updatedUser.isAdmin, groupIds: updatedUser.groupIds });
+      // 1. Validate invite code exists
+      const { data: groupData, error: groupError } = await supabase
+        .from("groups")
+        .select("id")
+        .eq("id", inviteCode)
+        .single();
+        
+      if (groupError || !groupData) {
+        return { success: false, message: "Invalid invite code" };
+      }
+
+      // 2. Sign up via Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (authError) {
+        if (authError.message.includes("User already registered")) {
+           return { success: false, message: "Email already registered. Please log in." };
+        }
+        return { success: false, message: authError.message };
+      }
+
+      const userId = authData.user?.id;
+      if (!userId) {
+        return { success: false, message: "Failed to create user account" };
+      }
+
+      // 3. Insert into profiles
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({ id: userId, username });
+
+      if (profileError) {
+        if (profileError.code === '23505') {
+          return { success: false, message: "Username already taken. Try another." };
+        }
+        const errMsg = profileError.message || "Unknown error";
+        return { success: false, message: `Failed to create profile: ${errMsg}` };
+      }
+
+      // 4. Insert into user_groups
+      const { error: ugError } = await supabase
+        .from("user_groups")
+        .insert({ user_id: userId, group_id: inviteCode });
+
+      if (ugError) {
+        if (ugError.code === '23505') {
+            return { success: false, message: "Already a member of this league." };
+        }
+        const ugErrMsg = ugError.message || "Unknown error";
+        return { success: false, message: `Failed to join group: ${ugErrMsg}` };
+      }
       
-      if (updatedUser.groupIds.length === 1) setCurrentGroup(inviteCode);
-      else setCurrentGroup(null); // Force group selection
-
-      return { success: true, message: `Successfully joined ${VALID_GROUPS[inviteCode]}!` };
+      await refreshUserGroups();
+      return { success: true, message: `Successfully joined ${inviteCode}!` };
+      
+    } catch (err: any) {
+      return { success: false, message: err.message || "An unknown error occurred" };
     }
+  };
 
-    const usernameExists = users.some(u => u.username === username);
-    if (usernameExists) {
-      return { success: false, message: "Username already taken" };
+  const login = async (email: string, password: string): Promise<{ success: boolean, message: string }> => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, message: "Invalid email or password" };
+      }
+      
+      return { success: true, message: "Login successful!" };
+    } catch (err: any) {
+      return { success: false, message: err.message || "An unknown error occurred" };
     }
+  };
 
-    const newUser: User = {
-      id: `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      email,
-      username,
-      password,
-      score: 0,
-      isAdmin: false,
-      groupIds: [inviteCode]
-    };
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
 
-    setUsers(prev => [...prev, newUser]);
-    setCurrentUser({ id: newUser.id, username: newUser.username, isAdmin: false, groupIds: [inviteCode] });
-    setCurrentGroup(inviteCode);
-    return { success: true, message: "Signup successful" };
-  }, [users, setUsers, setCurrentUser, setCurrentGroup]);
+  const resetPasswordForEmail = async (email: string): Promise<{ success: boolean, message: string }> => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
 
-  const login = useCallback((email: string, password: string): { success: boolean, message: string } => {
-    if (email.toLowerCase() === "admin@ipl.com") {
-      setCurrentUser({ id: "admin", username: "Admin", isAdmin: true, groupIds: [] });
-      setCurrentGroup(null);
-      return { success: true, message: "Logged in as Admin" };
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      return { success: true, message: "📧 Password reset link sent to your email. Please check your inbox." };
+    } catch (err: any) {
+      return { success: false, message: err.message || "An unknown error occurred" };
     }
+  };
 
-    const user = users.find(u => u.email === email && u.password === password);
-    if (!user) {
-      return { success: false, message: "Invalid email or password" };
+  const updatePassword = async (newPassword: string): Promise<{ success: boolean, message: string }> => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      return { success: true, message: "Password updated successfully!" };
+    } catch (err: any) {
+      return { success: false, message: err.message || "An unknown error occurred" };
     }
-
-    setCurrentUser({ id: user.id, username: user.username, isAdmin: user.isAdmin, groupIds: user.groupIds });
-    if (user.groupIds.length === 1) {
-      setCurrentGroup(user.groupIds[0]);
-    } else {
-      setCurrentGroup(null); // Force selection
-    }
-    return { success: true, message: "Login successful" };
-  }, [users, setCurrentUser, setCurrentGroup]);
-
-  const logout = useCallback(() => {
-    setCurrentUser(null);
-    setCurrentGroup(null);
-  }, [setCurrentUser, setCurrentGroup]);
+  };
 
   return {
-    users,
     currentUser,
     currentGroup,
     setCurrentGroup,
     signup,
     login,
     logout,
-    isHydrated
+    resetPasswordForEmail,
+    updatePassword,
+    isHydrated,
+    refreshUserGroups
   };
 }

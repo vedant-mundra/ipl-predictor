@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePredictions } from "@/hooks/usePredictions";
 import { useResults } from "@/hooks/useResults";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +11,7 @@ import { SparklesIcon } from "@heroicons/react/24/outline";
 import { TEAM_CONFIG } from "@/lib/teams";
 import Image from "next/image";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 const matches = fixtures as Match[];
 
@@ -19,14 +20,25 @@ type FilterType = "all" | "upcoming" | "live-locked" | "predicted";
 export default function MatchesPage() {
   const { predict, getPrediction, clearPrediction, getPredictionCount, isHydrated: isPredsHydrated } = usePredictions();
   const { getResult } = useResults();
-  const { users, currentUser, currentGroup, isHydrated: isAuthHydrated } = useAuth();
+  const { currentUser, currentGroup, isHydrated: isAuthHydrated } = useAuth();
   
-  const groupUsers = currentGroup ? users.filter(u => u.groupIds?.includes(currentGroup)) : [];
+  const [totalUsers, setTotalUsers] = useState(0);
   const [filter, setFilter] = useState<FilterType>("all");
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [venueFilter, setVenueFilter] = useState<string>("all");
 
   const isHydrated = isPredsHydrated && isAuthHydrated;
+
+  useEffect(() => {
+    if (currentGroup) {
+      supabase.from("user_groups").select("*", { count: "exact", head: true }).eq("group_id", currentGroup)
+        .then(({ count }) => {
+          if (count !== null) setTotalUsers(count);
+        });
+    } else {
+      setTotalUsers(0);
+    }
+  }, [currentGroup]);
 
   const now = new Date();
 
@@ -199,7 +211,7 @@ export default function MatchesPage() {
               onClearPrediction={clearPrediction}
               index={i}
               predictionCount={getPredictionCount(match.id)}
-              totalUsers={currentGroup ? groupUsers.length : 0}
+              totalUsers={totalUsers}
               isLoggedIn={!!currentUser}
             />
           ))}

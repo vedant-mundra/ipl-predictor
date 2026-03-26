@@ -13,8 +13,8 @@ interface MatchCardProps {
   match: Match;
   prediction: Prediction | null;
   result: MatchResult | null;
-  onPredict: (matchId: number, team: string, matchDate: string, matchTime: string) => boolean;
-  onClearPrediction: (matchId: number, matchDate: string, matchTime: string) => boolean;
+  onPredict: (matchId: number, team: string, matchDate: string, matchTime: string) => Promise<boolean>;
+  onClearPrediction: (matchId: number, matchDate: string, matchTime: string) => Promise<boolean>;
   index: number;
   predictionCount: number;
   totalUsers: number;
@@ -77,12 +77,12 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
     return () => clearInterval(interval);
   }, [updateStatus]);
 
-  const handlePredict = (team: string) => {
+  const handlePredict = async (team: string) => {
     if (prediction?.predictedTeam === team) {
       // Toggle off
-      onClearPrediction(match.id, match.date, match.time);
+      await onClearPrediction(match.id, match.date, match.time);
     } else {
-      const ok = onPredict(match.id, team, match.date, match.time);
+      const ok = await onPredict(match.id, team, match.date, match.time);
       if (ok) {
         setAnimatePrediction(true);
         setTimeout(() => setAnimatePrediction(false), 600);

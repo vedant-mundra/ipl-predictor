@@ -15,6 +15,8 @@ export const metadata: Metadata = {
     "Predict the winner of every IPL 2026 match before they start. Track your score on the leaderboard. Frontend-only, no sign-up required.",
 };
 
+import { AuthProvider } from "@/contexts/AuthContext";
+
 export default function RootLayout({
   children,
 }: {
@@ -23,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${outfit.variable} font-outfit antialiased bg-[#06080F] text-white min-h-screen`} suppressHydrationWarning>
+        <AuthProvider>
         <div className="relative min-h-screen cricket-bg">
           {/* IPL-themed ambient background glows */}
           <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -44,6 +47,7 @@ export default function RootLayout({
             {children}
           </main>
         </div>
+        </AuthProvider>
       </body>
     </html>
   );

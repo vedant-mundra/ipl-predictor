@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { usePredictions } from "@/hooks/usePredictions";
 import { useResults } from "@/hooks/useResults";
 import { useAuth } from "@/hooks/useAuth";
 import fixtures from "@/data/fixtures.json";
 import type { Match, LeaderboardEntry } from "@/lib/types";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 const matches = fixtures as Match[];
 
@@ -21,14 +22,63 @@ const medalText = ["text-[#FFD700]", "text-gray-300", "text-[#CD7F32]"];
 export default function LeaderboardPage() {
   const { allPredictions, isHydrated: isPredsHydrated } = usePredictions();
   const { results, isHydrated: isResultsHydrated } = useResults();
-  const { users, currentUser, currentGroup, isHydrated: isAuthHydrated } = useAuth();
+  const { currentUser, currentGroup, isHydrated: isAuthHydrated } = useAuth();
+  
+  const [groupUsers, setGroupUsers] = useState<{ id: string, username: string }[]>([]);
+  const [isUsersHydrated, setIsUsersHydrated] = useState(false);
 
-  const isHydrated = isPredsHydrated && isResultsHydrated && isAuthHydrated;
+  useEffect(() => {
+    if (!currentGroup) {
+      setGroupUsers([]);
+      setIsUsersHydrated(true);
+      return;
+    }
+    
+    const fetchUsers = async () => {
+      setIsUsersHydrated(false);
+      
+      // 1. Fetch user_groups explicitly
+      const { data: userGroups } = await supabase
+        .from("user_groups")
+        .select("user_id")
+        .eq("group_id", currentGroup);
+
+      if (!userGroups || userGroups.length === 0) {
+        setGroupUsers([]);
+        setIsUsersHydrated(true);
+        return;
+      }
+
+      const userIds = userGroups.map(ug => ug.user_id);
+
+      // 2. Fetch profiles explicitly matching those IDs
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("id", userIds);
+
+      // 3. Map them exactly together in memory
+      const mapped = userGroups.map(ug => {
+        const matchingProfile = profiles?.find(p => p.id === ug.user_id);
+        return {
+          id: ug.user_id,
+          username: matchingProfile?.username || "Player"
+        };
+      });
+      
+      setGroupUsers(mapped);
+      setIsUsersHydrated(true);
+    };
+
+    fetchUsers();
+  }, [currentGroup]);
+
+  const isHydrated = isPredsHydrated && isResultsHydrated && isAuthHydrated && isUsersHydrated;
 
   const leaderboard = useMemo((): LeaderboardEntry[] => {
     const completedMatchIds = results.map((r) => r.id);
 
-    const validUsers = currentGroup ? users.filter(u => u.groupIds?.includes(currentGroup)) : [];
+    const validUsers = groupUsers;
 
     const entries: LeaderboardEntry[] = validUsers.map(user => {
       // Find user predictions
@@ -82,7 +132,7 @@ export default function LeaderboardPage() {
     });
 
     return entries;
-  }, [allPredictions, results, users, currentUser, currentGroup]);
+  }, [allPredictions, results, groupUsers, currentUser, currentGroup]);
 
   const completedMatches = results.length;
 
@@ -156,16 +206,6 @@ export default function LeaderboardPage() {
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="glass rounded-2xl h-20 shimmer" />
           ))}
-        </div>
-      ) : completedMatches === 0 ? (
-        <div className="glass rounded-3xl p-12 text-center border-white/5">
-          <div className="w-16 h-16 rounded-full bg-white/5 mx-auto flex items-center justify-center mb-4">
-            <span className="text-2xl opacity-50">🏆</span>
-          </div>
-          <p className="text-white/80 text-lg font-bold">No results yet</p>
-          <p className="text-white/40 text-sm mt-2">
-            No matches completed yet!
-          </p>
         </div>
       ) : leaderboard.length === 0 ? (
         <div className="glass rounded-3xl p-12 text-center border-white/5">

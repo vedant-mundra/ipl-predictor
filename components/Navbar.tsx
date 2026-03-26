@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { TrophyIcon, CalendarIcon, ShieldCheckIcon, UserCircleIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 
 const navLinks = [
   { href: "/", label: "Matches", icon: CalendarIcon },
@@ -13,7 +15,23 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { currentUser, currentGroup, logout, users } = useAuth();
+  const { currentUser, currentGroup, logout } = useAuth();
+  const [userCount, setUserCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (currentGroup) {
+      const fetchCount = async () => {
+        const { count } = await supabase
+          .from("user_groups")
+          .select("*", { count: "exact", head: true })
+          .eq("group_id", currentGroup);
+        if (count !== null) setUserCount(count);
+      };
+      fetchCount();
+    } else {
+      setUserCount(null);
+    }
+  }, [currentGroup]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#D4AF37]/15"
@@ -39,7 +57,7 @@ export function Navbar() {
                 </defs>
               </svg>
             </div>
-            <div className="flex flex-col leading-tight">
+            <div className="flex flex-col leading-tight whitespace-nowrap">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-[10px] font-black uppercase tracking-[0.15em] gold-text">TATA</span>
                 <span className="text-sm font-black tracking-wide text-white">IPL</span>
@@ -51,16 +69,16 @@ export function Navbar() {
           {/* Nav links & Auth */}
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="hidden md:flex flex-col items-end mr-2">
-              {currentGroup && (
+              {currentGroup && userCount !== null && (
                 <div className="flex items-center gap-1.5 text-[#D4AF37] bg-[#D4AF37]/10 px-3 py-1 rounded-full border border-[#D4AF37]/20">
                   <span className="text-[10px] font-bold uppercase tracking-wider">
-                    🔥 {users.filter(u => u.groupIds?.includes(currentGroup)).length} Playing
+                    🔥 {userCount} Playing
                   </span>
                 </div>
               )}
-              {currentUser?.groupIds && currentUser.groupIds.length > 1 && (
-                <Link href="/groups" className="text-[9px] text-gray-400 hover:text-white uppercase font-bold tracking-widest mt-1 mr-1">
-                  Switch League &rarr;
+              {currentUser && (
+                <Link href="/groups" className="text-[9px] text-gray-400 hover:text-white uppercase font-bold tracking-widest mt-1 mr-1 transition-colors">
+                  Switch / Join League &rarr;
                 </Link>
               )}
             </div>
@@ -107,13 +125,13 @@ export function Navbar() {
                 <div className="flex items-center gap-2">
                   <Link
                     href="/login"
-                    className="px-3 py-1.5 text-sm font-medium text-white/80 hover:text-white transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium text-white/80 hover:text-white transition-colors whitespace-nowrap"
                   >
                     Log In
                   </Link>
                   <Link
                     href="/signup"
-                    className="px-3 py-1.5 text-sm font-bold bg-[#D4AF37] hover:bg-[#B38F22] text-black rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-sm font-bold bg-[#D4AF37] hover:bg-[#B38F22] text-black rounded-lg transition-colors whitespace-nowrap"
                   >
                     Sign Up
                   </Link>

@@ -9,7 +9,8 @@ import { TEAM_CONFIG } from "@/lib/teams";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
-import { use } from "react";
+import { use, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 const matches = fixtures as Match[];
 
@@ -17,9 +18,29 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
   const unwrappedParams = use(params);
   const { allPredictions, isHydrated: isPredsHydrated } = usePredictions();
   const { results, isHydrated: isResultsHydrated } = useResults();
-  const { users, currentUser, isHydrated: isAuthHydrated } = useAuth();
+  const { currentUser, isHydrated: isAuthHydrated } = useAuth();
   
-  const isHydrated = isPredsHydrated && isResultsHydrated && isAuthHydrated;
+  const [user, setUser] = useState<{ id: string, username: string, isAdmin: boolean } | null>(null);
+  const [isUserHydrated, setIsUserHydrated] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      setIsUserHydrated(false);
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .eq("id", unwrappedParams.id)
+        .single();
+        
+      if (data) {
+        setUser({ id: data.id, username: data.username, isAdmin: false });
+      }
+      setIsUserHydrated(true);
+    };
+    fetchUser();
+  }, [unwrappedParams.id]);
+  
+  const isHydrated = isPredsHydrated && isResultsHydrated && isAuthHydrated && isUserHydrated;
 
   if (!isHydrated) {
     return (
@@ -30,8 +51,6 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
     );
   }
 
-  const user = users.find(u => u.id === unwrappedParams.id);
-  
   if (!user) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center">
