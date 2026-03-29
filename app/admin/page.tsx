@@ -51,10 +51,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="glass rounded-xl p-3 mb-6 text-xs text-gray-500 border border-yellow-500/15 bg-yellow-500/5">
-        ⚠️ This page is for setting results locally. Data is saved in your browser only.
-      </div>
-
       <div className="space-y-3">
         {matches.map((match) => {
           const result = results.find((r) => r.id === match.id);
