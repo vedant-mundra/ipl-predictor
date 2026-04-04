@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { usePredictions } from "@/hooks/usePredictions";
 import { useResults } from "@/hooks/useResults";
 import { useAuth } from "@/hooks/useAuth";
+import { useGroupUsers } from "@/hooks/useGroupUsers";
 import { MatchCard } from "@/components/MatchCard";
 import fixtures from "@/data/fixtures.json";
 import type { Match } from "@/lib/types";
@@ -18,9 +19,10 @@ const matches = fixtures as Match[];
 type FilterType = "all" | "upcoming" | "live-locked" | "predicted";
 
 export default function MatchesPage() {
-  const { predict, getPrediction, clearPrediction, getPredictionCount, isHydrated: isPredsHydrated } = usePredictions();
+  const { allPredictions, predict, getPrediction, clearPrediction, getPredictionCount, isHydrated: isPredsHydrated } = usePredictions();
   const { getResult } = useResults();
   const { currentUser, currentGroup, isHydrated: isAuthHydrated } = useAuth();
+  const { groupUsers } = useGroupUsers();
   
   const [totalUsers, setTotalUsers] = useState(0);
   const [filter, setFilter] = useState<FilterType>("all");
@@ -211,6 +213,8 @@ export default function MatchesPage() {
               onClearPrediction={clearPrediction}
               index={i}
               predictionCount={getPredictionCount(match.id)}
+              matchPredictions={allPredictions.filter(p => p.matchId === match.id)}
+              groupUsers={groupUsers}
               totalUsers={totalUsers}
               isLoggedIn={!!currentUser}
             />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { LockClosedIcon, CheckCircleIcon, ClockIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { LockClosedIcon, CheckCircleIcon, ClockIcon, MapPinIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as CheckCircleSolid } from "@heroicons/react/24/solid";
 import type { Match, MatchResult, Prediction } from "@/lib/types";
 import { TEAM_CONFIG, SHORT_TO_FULL } from "@/lib/teams";
@@ -17,6 +17,8 @@ interface MatchCardProps {
   onClearPrediction: (matchId: number, matchDate: string, matchTime: string) => Promise<boolean>;
   index: number;
   predictionCount: number;
+  matchPredictions?: Prediction[];
+  groupUsers?: { id: string; username: string }[];
   totalUsers: number;
   isLoggedIn: boolean;
 }
@@ -55,10 +57,23 @@ function getMatchStatus(dateStr: string, timeStr: string) {
   return `${diffMins}m`;
 }
 
-export function MatchCard({ match, prediction, result, onPredict, onClearPrediction, index, predictionCount, totalUsers, isLoggedIn }: MatchCardProps) {
+export function MatchCard({
+  match,
+  prediction,
+  result,
+  onPredict,
+  onClearPrediction,
+  index,
+  predictionCount,
+  matchPredictions = [],
+  groupUsers = [],
+  totalUsers,
+  isLoggedIn
+}: MatchCardProps) {
   const [isLocked, setIsLocked] = useState(false);
   const [countdown, setCountdown] = useState<string>("");
   const [animatePrediction, setAnimatePrediction] = useState(false);
+  const [showPredictionsModal, setShowPredictionsModal] = useState(false);
   const router = useRouter();
 
   const team1Config = TEAM_CONFIG[match.team1];
@@ -195,9 +210,16 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
           <MapPinIcon className="w-3 h-3" />
           {match.venue}
         </span>
-        <span className="text-[10px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 px-2.5 py-1 rounded-md border border-[#D4AF37]/20">
+        <button
+          onClick={() => predictionCount > 0 && setShowPredictionsModal(true)}
+          className={`text-[10px] font-bold text-[#D4AF37] px-2.5 py-1 rounded-md border transition-colors ${
+            predictionCount > 0 
+              ? "bg-[#D4AF37]/10 border-[#D4AF37]/20 hover:bg-[#D4AF37]/20 cursor-pointer" 
+              : "bg-white/5 border-white/10 text-white/40 cursor-default"
+          }`}
+        >
           {predictionCount} / {totalUsers} users predicted
-        </span>
+        </button>
       </div>
 
       {/* Divider */}
@@ -348,6 +370,50 @@ export function MatchCard({ match, prediction, result, onPredict, onClearPredict
           </div>
         )}
       </div>
+
+      {showPredictionsModal && (
+        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col p-4 animate-fade-in fade-in-up">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#D4AF37]" />
+              Predictions
+            </span>
+            <button onClick={() => setShowPredictionsModal(false)} className="text-white/50 hover:text-white transition-colors bg-white/5 p-1 rounded-full border border-white/10 hover:bg-white/10">
+               <XMarkIcon className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto scx pr-2 space-y-2.5 -mx-2 px-2">
+             {matchPredictions.length === 0 ? (
+               <div className="text-center text-xs text-white/50 mt-10">No predictions yet</div>
+             ) : (
+               groupUsers.filter(u => matchPredictions.some(p => p.userId === u.id)).map(user => {
+                 const pred = matchPredictions.find(p => p.userId === user.id);
+                 const team = pred?.predictedTeam;
+                 const teamConfig = TEAM_CONFIG[team as string];
+                 
+                 return (
+                   <div key={user.id} className="flex justify-between items-center bg-[#06080F]/60 rounded-xl p-3 border border-white/5 shadow-inner">
+                     <span className="text-xs font-bold text-white/90 truncate mr-3">{user.username}</span>
+                     {teamConfig ? (
+                       <div className="flex flex-col items-end">
+                         <div className="flex items-center gap-1.5 px-2 py-1.5 bg-white/5 rounded-lg border border-white/5" style={{ borderColor: `${teamConfig.primary}30` }}>
+                           <div className="relative w-4 h-4 bg-white rounded-full p-[2px]">
+                             <Image src={teamConfig.logo} alt={teamConfig.shortCode} fill className="object-contain" />
+                           </div>
+                           <span className="text-[10px] font-black text-white" style={{ color: teamConfig.primary }}>{teamConfig.shortCode}</span>
+                         </div>
+                       </div>
+                     ) : (
+                       <span className="text-[10px] text-white/50 bg-white/5 px-2 py-1 rounded-lg">Unknown</span>
+                     )}
+                   </div>
+                 );
+               })
+             )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
