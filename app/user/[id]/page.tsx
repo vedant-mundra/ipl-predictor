@@ -87,7 +87,7 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
     }
 
     return { pred, match, result, status };
-  }).sort((a, b) => b.pred.matchId - a.pred.matchId); // reverse chronological
+  }).sort((a, b) => a.pred.matchId - b.pred.matchId); // ascending chronological
 
   const totalCompleted = correct + wrong;
   const accuracy = totalCompleted > 0 ? Math.round((correct / totalCompleted) * 100) : 0;

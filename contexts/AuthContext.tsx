@@ -104,7 +104,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Initial fetch
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.warn("Session error ignored:", error.message);
+        if (error.message.includes("Refresh Token Not Found")) {
+          supabase.auth.signOut();
+        }
+      }
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -112,6 +118,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setIsHydrated(true);
       }
+    }).catch((err) => {
+      console.warn("Unhandled session error:", err);
+      setIsHydrated(true);
     });
 
     // Listen for auth changes

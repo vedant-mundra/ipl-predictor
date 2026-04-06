@@ -65,6 +65,11 @@ export default function MatchesPage() {
     if (venueFilter !== "all" && m.venue !== venueFilter) return false;
     
     return true;
+  }).sort((a, b) => {
+    if (a.locked && !b.locked) return 1;
+    if (!a.locked && b.locked) return -1;
+    if (!a.locked && !b.locked) return a.id - b.id;
+    return b.id - a.id;
   });
 
   const predictedCount = withStatus.filter((m) => m.prediction).length;
