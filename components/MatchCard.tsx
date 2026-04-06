@@ -21,6 +21,7 @@ interface MatchCardProps {
   groupUsers?: { id: string; username: string }[];
   totalUsers: number;
   isLoggedIn: boolean;
+  id?: string;
 }
 
 function formatDate(dateStr: string, timeStr: string) {
@@ -68,7 +69,8 @@ export function MatchCard({
   matchPredictions = [],
   groupUsers = [],
   totalUsers,
-  isLoggedIn
+  isLoggedIn,
+  id
 }: MatchCardProps) {
   const [isLocked, setIsLocked] = useState(false);
   const [countdown, setCountdown] = useState<string>("");
@@ -114,6 +116,7 @@ export function MatchCard({
 
   return (
     <div
+      id={id}
       className={`relative glass glass-hover rounded-2xl overflow-hidden transition-all duration-300 fade-in-up ipl-card-accent ${animatePrediction ? "scale-[1.01]" : ""
         }`}
       style={

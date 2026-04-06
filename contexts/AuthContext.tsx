@@ -107,9 +107,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.warn("Session error ignored:", error.message);
-        if (error.message.includes("Refresh Token Not Found")) {
-          supabase.auth.signOut();
-        }
       }
       setSession(session);
       setUser(session?.user ?? null);

@@ -60,7 +60,16 @@ export default function MatchesPage() {
   const upcomingCount = withStatus.filter(m => !m.locked).length;
   const doneCount = withStatus.filter(m => m.locked && !!m.result).length;
 
-  const nextUpcomingMatchId = [...withStatus].sort((a,b) => a.id - b.id).find(m => !m.locked)?.id;
+  const nextUpcomingMatchId = [...withStatus].sort((a,b) => a.id - b.id).find(m => !m.result)?.id;
+
+  useEffect(() => {
+    if (isHydrated && nextUpcomingMatchId) {
+      setTimeout(() => {
+        const el = document.getElementById(`match-${nextUpcomingMatchId}`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 150);
+    }
+  }, [isHydrated, filter, nextUpcomingMatchId]);
 
   const filtered = withStatus.filter((m) => {
     if (filter === "upcoming" && m.locked) return false;
@@ -70,15 +79,7 @@ export default function MatchesPage() {
     if (venueFilter !== "all" && m.venue !== venueFilter) return false;
     
     return true;
-  }).sort((a, b) => {
-    const aIsTop = (a.locked && !a.result) || (a.id === nextUpcomingMatchId);
-    const bIsTop = (b.locked && !b.result) || (b.id === nextUpcomingMatchId);
-
-    if (aIsTop && !bIsTop) return -1;
-    if (!aIsTop && bIsTop) return 1;
-
-    return a.id - b.id;
-  });
+  }).sort((a, b) => a.id - b.id);
 
   const predictedCount = withStatus.filter((m) => m.prediction).length;
 
@@ -218,6 +219,7 @@ export default function MatchesPage() {
           {filtered.map((match, i) => (
             <MatchCard
               key={match.id}
+              id={`match-${match.id}`}
               match={match}
               prediction={getPrediction(match.id)}
               result={getResult(match.id)}
