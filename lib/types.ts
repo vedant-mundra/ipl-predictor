@@ -52,6 +52,7 @@ export interface LeaderboardEntry {
   userId: string;
   name: string;
   avatar: string;
+  score: number;
   correct: number;
   total: number;
   isCurrentUser?: boolean;

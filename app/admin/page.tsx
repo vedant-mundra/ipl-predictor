@@ -114,6 +114,17 @@ export default function AdminPage() {
                         {match.team1Short} Won
                       </button>
                       <button
+                        onClick={() => handleSet(match.id, "Washout")}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-200 hover:scale-105"
+                        style={{
+                          color: "#60A5FA",
+                          borderColor: "#3B82F640",
+                          backgroundColor: "#3B82F612",
+                        }}
+                      >
+                        Washout
+                      </button>
+                      <button
                         onClick={() => handleSet(match.id, match.team2)}
                         className="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-200 hover:scale-105"
                         style={{

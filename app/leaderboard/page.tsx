@@ -84,21 +84,33 @@ export default function LeaderboardPage() {
       // Find user predictions
       const userPreds = allPredictions.filter(p => p.userId === user.id);
 
-      const correct = completedMatchIds.filter(matchId => {
+      let score = 0;
+      let correct = 0;
+
+      completedMatchIds.forEach(matchId => {
         const pred = userPreds.find(p => p.matchId === matchId);
         const result = results.find(r => r.id === matchId);
-        return pred && result && pred.predictedTeam === result.winner;
-      }).length;
+        
+        if (result?.winner === "Washout") {
+          score += 0.5;
+        } else if (pred && result && pred.predictedTeam === result.winner) {
+          score += 1;
+          correct += 1;
+        }
+      });
 
-      const total = completedMatchIds.filter(matchId =>
-        userPreds.find(p => p.matchId === matchId)
-      ).length;
+      const total = completedMatchIds.filter(matchId => {
+        const pred = userPreds.find(p => p.matchId === matchId);
+        const result = results.find(r => r.id === matchId);
+        return pred && result?.winner !== "Washout";
+      }).length;
 
       return {
         rank: 0,
         userId: user.id,
         name: user.username,
         avatar: user.username.slice(0, 2).toUpperCase(),
+        score,
         correct,
         total,
         isCurrentUser: currentUser?.id === user.id,
@@ -106,7 +118,7 @@ export default function LeaderboardPage() {
     });
 
     entries.sort((a, b) => {
-      if (b.correct !== a.correct) return b.correct - a.correct;
+      if (b.score !== a.score) return b.score - a.score;
       const bAcc = b.total > 0 ? b.correct / b.total : 0;
       const aAcc = a.total > 0 ? a.correct / a.total : 0;
       if (bAcc !== aAcc) return bAcc - aAcc;
@@ -120,7 +132,7 @@ export default function LeaderboardPage() {
         const eAcc = e.total > 0 ? e.correct / e.total : 0;
         const prevAcc = prev.total > 0 ? prev.correct / prev.total : 0;
 
-        if (e.correct === prev.correct && eAcc === prevAcc && e.total === prev.total) {
+        if (e.score === prev.score && eAcc === prevAcc && e.total === prev.total) {
           e.rank = currentRank;
         } else {
           currentRank = i + 1;
@@ -190,7 +202,7 @@ export default function LeaderboardPage() {
                       isSecond ? "pt-4 pb-2 min-h-[110px]" :
                         "pt-4 pb-2 min-h-[90px]"
                     }`}>
-                    <span className={`text-3xl font-black ${medalText[posIndex]}`}>{entry.correct}</span>
+                    <span className={`text-3xl font-black ${medalText[posIndex]}`}>{entry.score}</span>
                     <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold mt-1">PTS</span>
                   </div>
                 </div>
@@ -280,7 +292,7 @@ export default function LeaderboardPage() {
                   {/* Points */}
                   <div className="col-span-2 flex justify-end">
                     <span className={`text-lg font-black ${entry.isCurrentUser ? "text-[#FFD700]" : "text-white"}`}>
-                      {entry.correct}
+                      {entry.score}
                     </span>
                   </div>
                 </div>

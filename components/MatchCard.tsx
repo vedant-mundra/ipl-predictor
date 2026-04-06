@@ -111,8 +111,9 @@ export function MatchCard({
   const predictedTeam = prediction?.predictedTeam;
   const winner = result?.winner;
 
-  const isCorrect = winner && predictedTeam === winner;
-  const isWrong = winner && predictedTeam && predictedTeam !== winner;
+  const isWashout = winner === "Washout";
+  const isCorrect = winner && !isWashout && predictedTeam === winner;
+  const isWrong = winner && !isWashout && predictedTeam && predictedTeam !== winner;
 
   return (
     <div
@@ -233,14 +234,26 @@ export function MatchCard({
         {/* Result outcome banner */}
         {winner && (
           <div
-            className={`mb-4 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold border ${isCorrect
-              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-              : isWrong
-                ? "bg-red-500/10 text-red-400 border-red-500/20"
-                : "bg-white/5 text-gray-400 border-white/5"
+            className={`mb-4 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold border ${isWashout
+              ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+              : isCorrect
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                : isWrong
+                  ? "bg-red-500/10 text-red-400 border-red-500/20"
+                  : "bg-white/5 text-gray-400 border-white/5"
               }`}
           >
-            {isCorrect ? (
+            {isWashout ? (
+              <>
+                 <div className="w-8 h-8 rounded-full bg-blue-500/20 flex flex-col items-center justify-center shrink-0 border border-blue-500/30">
+                   <span className="text-lg leading-none pt-0.5">☔</span>
+                 </div>
+                 <div>
+                   <div className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-0.5">Match Washed Out</div>
+                   <div className="text-blue-100/70 text-xs">0.5 pts awarded to everyone</div>
+                 </div>
+              </>
+            ) : isCorrect ? (
               <>
                 <div className="w-8 h-8 rounded-full bg-white p-1 shrink-0">
                   <div className="relative w-full h-full">
