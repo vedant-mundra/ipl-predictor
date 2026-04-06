@@ -16,7 +16,7 @@ import { supabase } from "@/lib/supabase";
 
 const matches = fixtures as Match[];
 
-type FilterType = "all" | "upcoming" | "live-locked" | "predicted";
+type FilterType = "all" | "upcoming" | "live-locked";
 
 export default function MatchesPage() {
   const { allPredictions, predict, getPrediction, clearPrediction, getPredictionCount, isHydrated: isPredsHydrated } = usePredictions();
@@ -53,23 +53,31 @@ export default function MatchesPage() {
     start.setHours(h, min, 0, 0);
     const locked = now >= start;
     const prediction = getPrediction(m.id);
-    return { ...m, locked, prediction };
+    const result = getResult(m.id);
+    return { ...m, locked, prediction, result };
   });
+
+  const upcomingCount = withStatus.filter(m => !m.locked).length;
+  const doneCount = withStatus.filter(m => m.locked && !!m.result).length;
+
+  const nextUpcomingMatchId = [...withStatus].sort((a,b) => a.id - b.id).find(m => !m.locked)?.id;
 
   const filtered = withStatus.filter((m) => {
     if (filter === "upcoming" && m.locked) return false;
     if (filter === "live-locked" && !m.locked) return false;
-    if (filter === "predicted" && !m.prediction) return false;
     
     if (teamFilter !== "all" && m.team1 !== teamFilter && m.team2 !== teamFilter) return false;
     if (venueFilter !== "all" && m.venue !== venueFilter) return false;
     
     return true;
   }).sort((a, b) => {
-    if (a.locked && !b.locked) return 1;
-    if (!a.locked && b.locked) return -1;
-    if (!a.locked && !b.locked) return a.id - b.id;
-    return b.id - a.id;
+    const aIsTop = (a.locked && !a.result) || (a.id === nextUpcomingMatchId);
+    const bIsTop = (b.locked && !b.result) || (b.id === nextUpcomingMatchId);
+
+    if (aIsTop && !bIsTop) return -1;
+    if (!aIsTop && bIsTop) return 1;
+
+    return a.id - b.id;
   });
 
   const predictedCount = withStatus.filter((m) => m.prediction).length;
@@ -143,9 +151,8 @@ export default function MatchesPage() {
             {(
               [
                 { key: "all", label: `All (${matches.length})` },
-                { key: "upcoming", label: `Open` },
-                { key: "live-locked", label: `Locked` },
-                { key: "predicted", label: `Done` },
+                { key: "upcoming", label: `Open (${upcomingCount})` },
+                { key: "live-locked", label: `Done (${doneCount})` },
               ] as { key: FilterType; label: string }[]
             ).map(({ key, label }) => (
               <button
