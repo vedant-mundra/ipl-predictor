@@ -73,9 +73,11 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
     const match = matches.find(m => m.id === pred.matchId);
     const result = results.find(r => r.id === pred.matchId);
     
-    let status: "correct" | "wrong" | "pending" = "pending";
+    let status: "correct" | "wrong" | "pending" | "washout" = "pending";
     if (result) {
-      if (result.winner === pred.predictedTeam) {
+      if (result.winner === "Washout") {
+        status = "washout";
+      } else if (result.winner === pred.predictedTeam) {
         status = "correct";
         correct++;
       } else {
@@ -158,6 +160,7 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
                 <div key={pred.matchId} className={`glass rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 transition-colors hover:bg-white/[0.02] ${
                   status === "correct" ? "border-l-green-500" :
                   status === "wrong" ? "border-l-red-500" :
+                  status === "washout" ? "border-l-gray-500" :
                   "border-l-blue-500"
                 }`}>
                   
@@ -196,6 +199,10 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
                       ) : status === "wrong" ? (
                         <div className="flex items-center gap-1.5 text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20 text-xs font-bold whitespace-nowrap">
                           <XCircleIcon className="w-4 h-4" /> Lost
+                        </div>
+                      ) : status === "washout" ? (
+                        <div className="flex items-center gap-1.5 text-gray-400 bg-gray-500/10 px-3 py-1.5 rounded-lg border border-gray-500/20 text-xs font-bold whitespace-nowrap">
+                          <XCircleIcon className="w-4 h-4" /> Washed Out
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20 text-xs font-bold whitespace-nowrap">

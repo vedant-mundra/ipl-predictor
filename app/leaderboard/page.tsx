@@ -90,9 +90,8 @@ export default function LeaderboardPage() {
       completedMatchIds.forEach(matchId => {
         const pred = userPreds.find(p => p.matchId === matchId);
         const result = results.find(r => r.id === matchId);
-        
         if (result?.winner === "Washout") {
-          score += 0.5;
+          // Washout matches do not award any points
         } else if (pred && result && pred.predictedTeam === result.winner) {
           score += 1;
           correct += 1;

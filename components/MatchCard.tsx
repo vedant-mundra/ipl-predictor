@@ -250,7 +250,7 @@ export function MatchCard({
                  </div>
                  <div>
                    <div className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-0.5">Match Washed Out</div>
-                   <div className="text-blue-100/70 text-xs">0.5 pts awarded to everyone</div>
+                   <div className="text-blue-100/70 text-xs">This match is excluded from scoring</div>
                  </div>
               </>
             ) : isCorrect ? (
