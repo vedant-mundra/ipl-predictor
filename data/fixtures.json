@@ -698,5 +698,45 @@
     "date": "2026-05-24",
     "time": "19:30",
     "venue": "Kolkata"
+  },
+  {
+    "id": 71,
+    "team1": "TBD",
+    "team2": "TBD",
+    "team1Short": "TBD",
+    "team2Short": "TBD",
+    "date": "2026-05-26",
+    "time": "19:30",
+    "venue": "Himachal Pradesh Cricket Association Stadium, Dharamshala"
+  },
+  {
+    "id": 72,
+    "team1": "TBD",
+    "team2": "TBD",
+    "team1Short": "TBD",
+    "team2Short": "TBD",
+    "date": "2026-05-27",
+    "time": "19:30",
+    "venue": "New International Cricket Stadium, New Chandigarh"
+  },
+  {
+    "id": 73,
+    "team1": "TBD",
+    "team2": "TBD",
+    "team1Short": "TBD",
+    "team2Short": "TBD",
+    "date": "2026-05-29",
+    "time": "19:30",
+    "venue": "New International Cricket Stadium, New Chandigarh"
+  },
+  {
+    "id": 74,
+    "team1": "TBD",
+    "team2": "TBD",
+    "team1Short": "TBD",
+    "team2Short": "TBD",
+    "date": "2026-05-31",
+    "time": "19:30",
+    "venue": "Narendra Modi Stadium, Ahmedabad"
   }
 ]

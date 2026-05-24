@@ -30,7 +30,7 @@ export function usePredictions() {
         userId: p.user_id,
         matchId: p.match_id,
         predictedTeam: p.predicted_team,
-        lockedAt: p.locked_at,
+        lockedAt: p.created_at,
       }));
       setGroupPredictions(mapped);
     } else {
@@ -88,6 +88,7 @@ export function usePredictions() {
             group_id: currentGroup,
             match_id: matchId,
             predicted_team: team,
+            created_at: new Date().toISOString(),
           },
           { onConflict: "user_id,group_id,match_id" }
         );

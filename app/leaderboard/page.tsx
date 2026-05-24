@@ -75,17 +75,19 @@ export default function LeaderboardPage() {
 
   const isHydrated = isPredsHydrated && isResultsHydrated && isAuthHydrated && isUsersHydrated;
 
-  const leaderboard = useMemo((): LeaderboardEntry[] => {
+  const leaderboard = useMemo(() => {
     const completedMatchIds = results.map((r) => r.id);
 
     const validUsers = groupUsers;
 
-    const entries: LeaderboardEntry[] = validUsers.map(user => {
+    const entries = validUsers.map(user => {
       // Find user predictions
       const userPreds = allPredictions.filter(p => p.userId === user.id);
 
-      let score = 0;
       let correct = 0;
+      let groupStageScore = 0;
+      let playoffsScore = 0;
+      let championScore = 0;
 
       completedMatchIds.forEach(matchId => {
         const pred = userPreds.find(p => p.matchId === matchId);
@@ -93,12 +95,38 @@ export default function LeaderboardPage() {
         if (result?.winner === "Washout") {
           // Washout matches do not award any points
         } else if (pred && result && pred.predictedTeam === result.winner) {
-          score += 1;
+          if (matchId <= 70) {
+            groupStageScore += 1;
+          } else if (matchId <= 73) {
+            playoffsScore += 2;
+          } else if (matchId === 74) {
+            playoffsScore += 3;
+          }
           correct += 1;
         }
       });
 
+      // Champion Prediction Bonus
+      const finalResult = results.find(r => r.id === 74);
+      const userChampPred = userPreds.find(p => p.matchId === 100);
+      const predictedChamp = userChampPred?.predictedTeam || null;
+
+      if (finalResult && finalResult.winner && finalResult.winner !== "Washout" && predictedChamp) {
+        if (predictedChamp === finalResult.winner) {
+          // Check if predicted before 7:30 pm of 26th May (IST)
+          const predictionTime = userChampPred?.lockedAt ? new Date(userChampPred.lockedAt) : null;
+          const deadline = new Date("2026-05-26T19:30:00+05:30");
+          if (predictionTime && predictionTime < deadline) {
+            championScore += 5;
+          }
+        }
+      }
+
+      const score = groupStageScore + playoffsScore + championScore;
+
       const total = completedMatchIds.filter(matchId => {
+        // Exclude champion prediction matchId 100 from general match accuracy
+        if (matchId === 100) return false;
         const pred = userPreds.find(p => p.matchId === matchId);
         const result = results.find(r => r.id === matchId);
         return pred && result?.winner !== "Washout";
@@ -113,6 +141,10 @@ export default function LeaderboardPage() {
         correct,
         total,
         isCurrentUser: currentUser?.id === user.id,
+        groupStageScore,
+        playoffsScore,
+        championScore,
+        predictedChamp,
       };
     });
 
@@ -150,7 +182,7 @@ export default function LeaderboardPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       {/* Header */}
-      <div className="flex flex-col items-center text-center mb-10">
+      <div className="flex flex-col items-center text-center mb-8">
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FFD700] to-[#B8860B] flex items-center justify-center shadow-[0_0_40px_rgba(212,175,55,0.4)] mb-4 border-2 border-[#FFF0A0]/40 relative overflow-hidden">
           <div className="absolute inset-0 bg-white/30 w-full h-full skew-x-[-20deg] translate-x-[-150%] animate-[shimmer_3s_infinite]" />
           <span className="text-3xl filter drop-shadow-md relative z-10">👑</span>
@@ -161,6 +193,35 @@ export default function LeaderboardPage() {
         <p className="text-sm font-medium text-[#D4AF37] mt-2 tracking-wider uppercase">
           {completedMatches} / {matches.length} Matches Completed
         </p>
+      </div>
+
+      {/* Point System Breakdown Banner */}
+      <div className="glass rounded-2xl p-4 mb-10 border-white/5 bg-white/[0.01]">
+        <div className="font-bold text-[#D4AF37] uppercase tracking-wider text-[10px] flex items-center gap-1.5 mb-2.5">
+          <span>📢</span> Playoff Point System Rules
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div className="bg-white/5 p-2 rounded-xl border border-white/5">
+            <div className="text-white/40 text-[9px] uppercase tracking-wider font-bold">Group Stage</div>
+            <div className="text-white font-black text-xs mt-0.5">+1 Pt</div>
+            <div className="text-[8px] text-white/30">Matches 1 - 70</div>
+          </div>
+          <div className="bg-[#FF822A]/10 p-2 rounded-xl border border-[#FF822A]/20">
+            <div className="text-[#FF822A] text-[9px] uppercase tracking-wider font-bold">Qualifiers / Elim</div>
+            <div className="text-[#FF822A] font-black text-xs mt-0.5">+2 Pts</div>
+            <div className="text-[8px] text-[#FF822A]/55">Matches 71 - 73</div>
+          </div>
+          <div className="bg-[#FFD700]/10 p-2 rounded-xl border border-[#FFD700]/20">
+            <div className="text-[#FFD700] text-[9px] uppercase tracking-wider font-bold">Grand Final</div>
+            <div className="text-[#FFD700] font-black text-xs mt-0.5">+3 Pts</div>
+            <div className="text-[8px] text-[#FFD700]/55">Match 74</div>
+          </div>
+          <div className="bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
+            <div className="text-emerald-400 text-[9px] uppercase tracking-wider font-bold">Champion Pick</div>
+            <div className="text-emerald-400 font-black text-xs mt-0.5">+5 Pts</div>
+            <div className="text-[8px] text-emerald-400/55">Locked Pick</div>
+          </div>
+        </div>
       </div>
 
       {/* Top 3 podium (if results available) */}
@@ -238,7 +299,7 @@ export default function LeaderboardPage() {
           </div>
 
           <div className="divide-y divide-white/5">
-            {leaderboard.map((entry) => {
+            {leaderboard.map((entry: any) => {
               const accuracy =
                 entry.total > 0 ? Math.round((entry.correct / entry.total) * 100) : 0;
               return (
@@ -277,9 +338,19 @@ export default function LeaderboardPage() {
                           <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[8px] bg-[#D4AF37] text-black font-black uppercase tracking-widest align-middle flex-shrink-0">YOU</span>
                         )}
                       </Link>
-                      <p className="text-[10px] text-white/40 font-medium">
-                        {entry.total} Match{entry.total !== 1 ? "es" : ""}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-white/40 font-medium">
+                        <span>{entry.total} Match{entry.total !== 1 ? "es" : ""}</span>
+                        {entry.predictedChamp && (
+                          <span className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-bold ${entry.championScore > 0 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-white/5 text-white/50 border border-white/5"}`}>
+                            👑 {entry.predictedChamp.split(" ").slice(-1)[0]}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[9px] text-[#D4AF37]/80 font-bold flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                        <span>Group stage: +{entry.groupStageScore || 0}</span>
+                        <span>Playoffs: +{entry.playoffsScore || 0}</span>
+                        {entry.championScore > 0 && <span className="text-emerald-400">Champ: +5</span>}
+                      </div>
                     </div>
                   </div>
 

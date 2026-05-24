@@ -159,19 +159,32 @@ export function MatchCard({
           <div className="absolute right-[15%] top-1/2 -translate-y-1/2 w-16 h-16 rounded-full blur-xl opacity-20" style={{ backgroundColor: team2Config?.primary }} />
 
           {/* Team 1 */}
-          <Link href={`/team/${match.team1Short.toLowerCase()}`} className="flex flex-col items-center w-[40%] text-center z-10 group cursor-pointer">
-            <div
-              className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 group-hover:scale-105 transition-all duration-300"
-              style={{ backgroundColor: "#fff", border: `3px solid ${team1Config?.primary}`, boxShadow: `0 0 15px ${team1Config?.primary}30` }}
-            >
-              <div className="relative w-full h-full">
-                <Image src={team1Config?.logo} alt={match.team1Short} fill className="object-contain p-2 drop-shadow-sm transition-transform group-hover:scale-110" sizes="(max-width: 768px) 72px, 84px" />
+          {match.team1Short === "TBD" ? (
+            <div className="flex flex-col items-center w-[40%] text-center z-10 select-none">
+              <div
+                className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 border-3 border-gray-600 bg-gray-800 shadow-[0_0_15px_rgba(75,85,99,0.3)]"
+              >
+                <span className="text-2xl">❓</span>
+              </div>
+              <div className="text-sm sm:text-base font-black tracking-tight text-gray-500 uppercase">
+                TBD
               </div>
             </div>
-            <div className="text-sm sm:text-base font-black tracking-tight text-white/90 group-hover:text-[#D4AF37] transition-colors">
-              {match.team1Short}
-            </div>
-          </Link>
+          ) : (
+            <Link href={`/team/${match.team1Short.toLowerCase()}`} className="flex flex-col items-center w-[40%] text-center z-10 group cursor-pointer">
+              <div
+                className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 group-hover:scale-105 transition-all duration-300"
+                style={{ backgroundColor: "#fff", border: `3px solid ${team1Config?.primary}`, boxShadow: `0 0 15px ${team1Config?.primary}30` }}
+              >
+                <div className="relative w-full h-full">
+                  <Image src={team1Config?.logo} alt={match.team1Short} fill className="object-contain p-2 drop-shadow-sm transition-transform group-hover:scale-110" sizes="(max-width: 768px) 72px, 84px" />
+                </div>
+              </div>
+              <div className="text-sm sm:text-base font-black tracking-tight text-white/90 group-hover:text-[#D4AF37] transition-colors">
+                {match.team1Short}
+              </div>
+            </Link>
+          )}
 
           {/* VS divider (Cricket ball style) */}
           <div className="flex flex-col items-center justify-center z-10 mx-2">
@@ -186,19 +199,32 @@ export function MatchCard({
           </div>
 
           {/* Team 2 */}
-          <Link href={`/team/${match.team2Short.toLowerCase()}`} className="flex flex-col items-center w-[40%] text-center z-10 group cursor-pointer">
-            <div
-              className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 group-hover:scale-105 transition-all duration-300"
-              style={{ backgroundColor: "#fff", border: `3px solid ${team2Config?.primary}`, boxShadow: `0 0 15px ${team2Config?.primary}30` }}
-            >
-              <div className="relative w-full h-full">
-                <Image src={team2Config?.logo} alt={match.team2Short} fill className="object-contain p-2 drop-shadow-sm transition-transform group-hover:scale-110" sizes="(max-width: 768px) 72px, 84px" />
+          {match.team2Short === "TBD" ? (
+            <div className="flex flex-col items-center w-[40%] text-center z-10 select-none">
+              <div
+                className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 border-3 border-gray-600 bg-gray-800 shadow-[0_0_15px_rgba(75,85,99,0.3)]"
+              >
+                <span className="text-2xl">❓</span>
+              </div>
+              <div className="text-sm sm:text-base font-black tracking-tight text-gray-500 uppercase">
+                TBD
               </div>
             </div>
-            <div className="text-sm sm:text-base font-black tracking-tight text-white/90 group-hover:text-[#D4AF37] transition-colors">
-              {match.team2Short}
-            </div>
-          </Link>
+          ) : (
+            <Link href={`/team/${match.team2Short.toLowerCase()}`} className="flex flex-col items-center w-[40%] text-center z-10 group cursor-pointer">
+              <div
+                className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full overflow-hidden flex items-center justify-center p-1.5 mb-2 group-hover:scale-105 transition-all duration-300"
+                style={{ backgroundColor: "#fff", border: `3px solid ${team2Config?.primary}`, boxShadow: `0 0 15px ${team2Config?.primary}30` }}
+              >
+                <div className="relative w-full h-full">
+                  <Image src={team2Config?.logo} alt={match.team2Short} fill className="object-contain p-2 drop-shadow-sm transition-transform group-hover:scale-110" sizes="(max-width: 768px) 72px, 84px" />
+                </div>
+              </div>
+              <div className="text-sm sm:text-base font-black tracking-tight text-white/90 group-hover:text-[#D4AF37] transition-colors">
+                {match.team2Short}
+              </div>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -322,6 +348,12 @@ export function MatchCard({
               </div>
             )}
           </div>
+        ) : match.team1Short === "TBD" || match.team2Short === "TBD" ? (
+          <div className="text-center py-3">
+             <span className="inline-block bg-white/5 border border-white/10 text-white/40 text-xs font-semibold py-2.5 px-4 rounded-xl">
+               ⏳ Awaiting Playoff Teams
+             </span>
+          </div>
         ) : !isLoggedIn ? (
           <div className="text-center py-3">
              <button onClick={() => router.push('/login')} className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold py-2 px-6 rounded-xl transition-colors border border-white/10">
@@ -414,8 +446,12 @@ export function MatchCard({
                      {teamConfig ? (
                        <div className="flex flex-col items-end">
                          <div className="flex items-center gap-1.5 px-2 py-1.5 bg-white/5 rounded-lg border border-white/5" style={{ borderColor: `${teamConfig.primary}30` }}>
-                           <div className="relative w-4 h-4 bg-white rounded-full p-[2px]">
-                             <Image src={teamConfig.logo} alt={teamConfig.shortCode} fill className="object-contain" />
+                           <div className="relative w-4 h-4 bg-white rounded-full p-[2px] flex items-center justify-center">
+                              {teamConfig.logo ? (
+                                <Image src={teamConfig.logo} alt={teamConfig.shortCode} fill className="object-contain" />
+                              ) : (
+                                <span className="text-[8px] font-black text-black">❓</span>
+                              )}
                            </div>
                            <span className="text-[10px] font-black text-white" style={{ color: teamConfig.primary }}>{teamConfig.shortCode}</span>
                          </div>

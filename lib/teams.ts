@@ -100,6 +100,15 @@ export const TEAM_CONFIG: Record<
     shortCode: "DC",
     logo: "https://upload.wikimedia.org/wikipedia/en/2/2f/Delhi_Capitals.svg",
   },
+  "TBD": {
+    primary: "#4B5563",
+    secondary: "#1F2937",
+    gradient: "from-gray-600 to-gray-800",
+    textColor: "text-gray-400",
+    emoji: "❓",
+    shortCode: "TBD",
+    logo: "",
+  },
 };
 
 export const SHORT_TO_FULL: Record<string, string> = {
@@ -113,4 +122,5 @@ export const SHORT_TO_FULL: Record<string, string> = {
   GT: "Gujarat Titans",
   LSG: "Lucknow Super Giants",
   DC: "Delhi Capitals",
+  TBD: "To Be Decided",
 };
